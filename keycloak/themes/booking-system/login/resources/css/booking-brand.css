@@ -1,0 +1,106 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap");
+
+:root {
+  --booking-ink: #1c2a24;
+  --booking-forest: #2d4a3e;
+  --booking-sage: #5a7d6c;
+  --booking-mist: #e8f0ec;
+  --booking-cream: #f6f3ee;
+  --booking-white: #fdfcfa;
+  --booking-accent: #3d6b5c;
+  --booking-accent-hover: #325546;
+  --booking-radius: 14px;
+  --booking-shadow: 0 18px 48px rgba(28, 42, 36, 0.12);
+  /* Replace default Keycloak marketing background */
+  --keycloak-bg-logo-url: none;
+  --keycloak-logo-url: none;
+  --keycloak-logo-height: 0;
+  --keycloak-logo-width: 0;
+}
+
+.login-pf body,
+body#keycloak-bg {
+  font-family: "Source Sans 3", system-ui, sans-serif;
+  color: var(--booking-ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(90, 125, 108, 0.35), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(45, 74, 62, 0.25), transparent 50%),
+    linear-gradient(165deg, var(--booking-cream) 0%, var(--booking-mist) 45%, #dce8e0 100%) !important;
+  background-size: auto !important;
+  min-height: 100vh;
+}
+
+.pf-v5-c-login__header {
+  padding-block: 1.5rem 0.5rem;
+}
+
+.pf-v5-c-login__header .pf-v5-c-brand {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  color: var(--booking-forest);
+  text-align: center;
+}
+
+.pf-v5-c-login__header .pf-v5-c-brand strong {
+  font-weight: 600;
+  color: var(--booking-forest);
+}
+
+.pf-v5-c-login__main {
+  background: var(--booking-white);
+  border-radius: var(--booking-radius);
+  box-shadow: var(--booking-shadow);
+  border: 1px solid rgba(45, 74, 62, 0.08);
+  padding: 2rem 2.25rem 2.5rem;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+
+.pf-v5-c-login__main-header .pf-v5-c-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  color: var(--booking-forest);
+}
+
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--booking-accent);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--booking-accent-hover);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--booking-accent-hover);
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.pf-v5-c-button.pf-m-secondary,
+.pf-v5-c-button.pf-m-link {
+  border-radius: 10px;
+}
+
+.pf-v5-c-form-control {
+  border-radius: 10px;
+  border-color: rgba(45, 74, 62, 0.2);
+}
+
+.pf-v5-c-form-control:focus {
+  border-color: var(--booking-sage);
+  box-shadow: 0 0 0 2px rgba(90, 125, 108, 0.25);
+}
+
+.pf-v5-c-login__main-footer-band {
+  border-top-color: rgba(45, 74, 62, 0.1);
+}
+
+.pf-v5-c-login__main-footer-links-item-link {
+  color: var(--booking-sage);
+  font-weight: 500;
+}
+
+.pf-v5-c-login__main-footer-links-item-link:hover {
+  color: var(--booking-accent-hover);
+}
+
+/* Softer alerts */
+.pf-v5-c-alert.pf-m-inline {
+  border-radius: 10px;
+}

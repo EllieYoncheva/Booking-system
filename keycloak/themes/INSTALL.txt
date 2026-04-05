@@ -1,0 +1,19 @@
+booking-system Keycloak login theme (extends keycloak.v2 — Keycloak 26.x)
+
+Install
+-------
+1. Copy the folder "booking-system" into your Keycloak themes directory:
+   <KEYCLOAK_HOME>/themes/booking-system
+   Example (your install): c:\keycloak-26.1.4\keycloak-26.1.4\themes\booking-system
+
+2. Restart Keycloak (or use start-dev — themes are not cached in dev mode).
+
+3. Admin Console: Realm settings → Themes → Login theme → booking-system → Save.
+   Or re-import realm-booking-system.json (includes "loginTheme": "booking-system").
+
+Docker (example)
+----------------
+Mount the themes folder:
+  -v /path/to/Booking-system/keycloak/themes:/opt/keycloak/themes
+
+Then build is not required for file-based themes in /opt/keycloak/themes.

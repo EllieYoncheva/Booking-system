@@ -3,6 +3,7 @@
   "enabled": true,
   "displayName": "Booking System (Pilates Studio)",
   "displayNameHtml": "<strong>Booking System</strong>",
+  "loginTheme": "booking-system",
   "sslRequired": "external",
   "registrationAllowed": true,
   "registrationEmailAsUsername": false,
