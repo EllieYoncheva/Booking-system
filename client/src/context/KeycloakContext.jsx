@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import keycloak, { initKeycloakOnce } from "../config/keycloak";
 
 const AuthContext = createContext(null);
@@ -58,13 +58,18 @@ export const AuthProvider = ({ children }) => {
     );
   };
 
+  const getToken = useCallback(async () => {
+    await keycloak.updateToken(30);
+    return keycloak.token;
+  }, []);
+
   if (!keycloakReady) {
     return <div>Зареждане на автентикация…</div>;
   }
 
   return (
     <AuthContext.Provider
-      value={{ keycloak, authenticated, userRoles, hasRole }}
+      value={{ keycloak, authenticated, userRoles, hasRole, getToken }}
     >
       {children}
     </AuthContext.Provider>

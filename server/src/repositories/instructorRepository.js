@@ -1,29 +1,51 @@
-import { getKnex } from "../db/knex.js";
+import { getPool } from "../db/pool.js";
 
-function instructors() {
-  return getKnex()("Instructors");
+export async function listInstructors() {
+  const pool = getPool();
+  if (!pool) return [];
+  const [rows] = await pool.query(
+    "SELECT * FROM `Instructors` WHERE `deletedAt` IS NULL ORDER BY `lastName` ASC, `firstName` ASC"
+  );
+  return rows;
 }
 
 export async function findInstructorById(id) {
-  return instructors().where({ id }).whereNull("deletedAt").first();
+  const pool = getPool();
+  if (!pool) return null;
+  const [rows] = await pool.query(
+    "SELECT * FROM `Instructors` WHERE `id` = ? AND `deletedAt` IS NULL LIMIT 1",
+    [id]
+  );
+  return rows[0] ?? null;
 }
 
-export async function listInstructors() {
-  return instructors().whereNull("deletedAt").orderBy("id", "asc");
-}
-
-/** @param {Record<string, unknown>} row */
 export async function insertInstructor(row) {
-  const [insertId] = await instructors().insert(row);
-  return findInstructorById(insertId);
+  const pool = getPool();
+  if (!pool) throw new Error("Database not configured");
+  const [result] = await pool.query(
+    "INSERT INTO `Instructors` (`firstName`, `lastName`, `phone`, `email`) VALUES (?, ?, ?, ?)",
+    [row.firstName, row.lastName, row.phone ?? null, row.email ?? null]
+  );
+  return result.insertId;
 }
 
-/** @param {number} id @param {Record<string, unknown>} patch */
 export async function updateInstructor(id, patch) {
-  await instructors().where({ id }).update(patch);
-  return findInstructorById(id);
+  const pool = getPool();
+  if (!pool) throw new Error("Database not configured");
+  const allowed = ["firstName", "lastName", "phone", "email"];
+  const keys = allowed.filter((k) => patch[k] !== undefined);
+  if (keys.length === 0) return;
+  const set = keys.map((k) => `\`${k}\` = ?`).join(", ");
+  const values = keys.map((k) => patch[k]);
+  values.push(id);
+  await pool.query(`UPDATE \`Instructors\` SET ${set} WHERE \`id\` = ? AND \`deletedAt\` IS NULL`, values);
 }
 
-export async function deleteInstructorSoft(id) {
-  await instructors().where({ id }).update({ deletedAt: getKnex().fn.now() });
+export async function softDeleteInstructor(id) {
+  const pool = getPool();
+  if (!pool) throw new Error("Database not configured");
+  await pool.query(
+    "UPDATE `Instructors` SET `deletedAt` = CURRENT_TIMESTAMP(6) WHERE `id` = ? AND `deletedAt` IS NULL",
+    [id]
+  );
 }

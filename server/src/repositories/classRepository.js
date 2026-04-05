@@ -1,58 +1,147 @@
-import { getKnex } from "../db/knex.js";
+import { getPool } from "../db/pool.js";
 
-function classes() {
-  return getKnex()("Classes");
+const classSelectJoins = `
+  SELECT c.*,
+    s.name AS serviceName,
+    st.name AS studioName,
+    i.firstName AS instructorFirstName,
+    i.lastName AS instructorLastName
+  FROM \`Classes\` c
+  INNER JOIN \`Services\` s ON s.id = c.serviceId AND s.deletedAt IS NULL
+  INNER JOIN \`Studios\` st ON st.id = c.studioId AND st.deletedAt IS NULL
+  INNER JOIN \`Instructors\` i ON i.id = c.instructorId AND i.deletedAt IS NULL
+`;
+
+const spotsSubquery = `
+  LEFT JOIN (
+    SELECT \`classId\`, COUNT(*) AS taken
+    FROM \`Reservations\`
+    WHERE \`status\` IN ('pending', 'confirmed')
+    GROUP BY \`classId\`
+  ) rc ON rc.classId = c.id
+`;
+
+/**
+ * @param {{ from?: string, to?: string }} [range]
+ */
+export async function listPublicClassesWithSpots(range = {}) {
+  const pool = getPool();
+  if (!pool) return [];
+  const conditions = ["c.`cancellationReason` IS NULL", "c.`startsAt` >= NOW(6)"];
+  const params = [];
+  if (range.from) {
+    conditions.push("c.`startsAt` >= ?");
+    params.push(range.from);
+  }
+  if (range.to) {
+    conditions.push("c.`startsAt` <= ?");
+    params.push(range.to);
+  }
+  const where = conditions.join(" AND ");
+  const [rows] = await pool.query(
+    `SELECT c.*,
+      s.name AS serviceName,
+      st.name AS studioName,
+      i.firstName AS instructorFirstName,
+      i.lastName AS instructorLastName,
+      (c.capacity - COALESCE(rc.taken, 0)) AS spotsLeft
+    FROM \`Classes\` c
+    INNER JOIN \`Services\` s ON s.id = c.serviceId AND s.deletedAt IS NULL
+    INNER JOIN \`Studios\` st ON st.id = c.studioId AND st.deletedAt IS NULL
+    INNER JOIN \`Instructors\` i ON i.id = c.instructorId AND i.deletedAt IS NULL
+    ${spotsSubquery}
+    WHERE ${where}
+    ORDER BY c.startsAt ASC`,
+    params
+  );
+  return rows;
 }
 
-/** @param {number} id */
+export async function listAllClasses() {
+  const pool = getPool();
+  if (!pool) return [];
+  const [rows] = await pool.query(
+    `${classSelectJoins} ORDER BY c.startsAt DESC`
+  );
+  return rows;
+}
+
 export async function findClassById(id) {
-  return classes().where({ id }).first();
+  const pool = getPool();
+  if (!pool) return null;
+  const [rows] = await pool.query(`${classSelectJoins} WHERE c.\`id\` = ? LIMIT 1`, [id]);
+  return rows[0] ?? null;
 }
 
-/**
- * @param {{ from?: Date, to?: Date }} range
- */
-export async function listClasses(range) {
-  const q = classes().select("*").orderBy("startsAt", "asc");
-  if (range.from) q.where("startsAt", ">=", range.from);
-  if (range.to) q.where("startsAt", "<=", range.to);
-  return q;
-}
-
-/**
- * @param {Omit<import("../entities/types.js").ScheduledClass, "id">} row
- */
 export async function insertClass(row) {
-  const [insertId] = await classes().insert(row);
-  return findClassById(insertId);
+  const pool = getPool();
+  if (!pool) throw new Error("Database not configured");
+  const [result] = await pool.query(
+    `INSERT INTO \`Classes\` (\`name\`, \`description\`, \`startsAt\`, \`endsAt\`, \`price\`, \`capacity\`, \`serviceId\`, \`studioId\`, \`instructorId\`, \`cancellationReason\`)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      row.name ?? null,
+      row.description ?? null,
+      row.startsAt,
+      row.endsAt,
+      row.price ?? null,
+      row.capacity,
+      row.serviceId,
+      row.studioId,
+      row.instructorId,
+      row.cancellationReason ?? null,
+    ]
+  );
+  return result.insertId;
+}
+
+export async function updateClass(id, patch) {
+  const pool = getPool();
+  if (!pool) throw new Error("Database not configured");
+  const allowed = [
+    "name",
+    "description",
+    "startsAt",
+    "endsAt",
+    "price",
+    "capacity",
+    "serviceId",
+    "studioId",
+    "instructorId",
+    "cancellationReason",
+  ];
+  const keys = allowed.filter((k) => patch[k] !== undefined);
+  if (keys.length === 0) return;
+  const set = keys.map((k) => `\`${k}\` = ?`).join(", ");
+  const values = keys.map((k) => patch[k]);
+  values.push(id);
+  await pool.query(`UPDATE \`Classes\` SET ${set} WHERE \`id\` = ?`, values);
 }
 
 /**
- * @param {number} id
- * @param {Partial<import("../entities/types.js").ScheduledClass>} patch
+ * Lock class row for booking (use inside transaction).
+ * @param {import("mysql2/promise").PoolConnection} conn
  */
-export async function updateClass(id, patch) {
-  await classes().where({ id }).update(patch);
-  return findClassById(id);
+export async function lockClassById(conn, id) {
+  const [rows] = await conn.query(
+    "SELECT * FROM `Classes` WHERE `id` = ? FOR UPDATE",
+    [id]
+  );
+  return rows[0] ?? null;
 }
 
-/** @param {number} id */
-export async function deleteClass(id) {
-  return classes().where({ id }).del();
+export async function countReservationsForClass(conn, classId) {
+  const [rows] = await conn.query(
+    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ? AND `status` IN ('pending', 'confirmed')",
+    [classId]
+  );
+  return Number(rows[0]?.cnt ?? 0);
 }
 
-/** @param {number} classId */
-export async function countActiveReservationsForClass(classId) {
-  const row = await getKnex()("Reservations")
-    .where({ classId })
-    .whereIn("status", ["pending", "confirmed"])
-    .count({ n: "*" })
-    .first();
-  return Number(row?.n ?? 0);
-}
-
-/** @param {number} classId */
-export async function countAnyReservationsForClass(classId) {
-  const row = await getKnex()("Reservations").where({ classId }).count({ n: "*" }).first();
-  return Number(row?.n ?? 0);
+export async function countReservationsAnyStatus(conn, classId) {
+  const [rows] = await conn.query(
+    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ?",
+    [classId]
+  );
+  return Number(rows[0]?.cnt ?? 0);
 }

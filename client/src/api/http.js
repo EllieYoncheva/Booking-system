@@ -1,75 +1,32 @@
-import keycloak from "../config/keycloak.js";
-
-const apiBase = () => import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
-
-export class ApiError extends Error {
-  /**
-   * @param {string} message
-   * @param {{ status?: number, code?: string }} [meta]
-   */
-  constructor(message, meta = {}) {
-    super(message);
-    this.name = "ApiError";
-    this.status = meta.status;
-    this.code = meta.code;
-  }
-}
-
 /**
- * @param {Response} response
- */
-async function parseErrorBody(response) {
-  const text = await response.text();
-  try {
-    const json = JSON.parse(text);
-    const err = json?.error;
-    if (err && typeof err === "object") {
-      return new ApiError(err.message || response.statusText, {
-        status: response.status,
-        code: err.code,
-      });
-    }
-  } catch {
-    // ignore JSON parse errors
-  }
-  return new ApiError(text || response.statusText, { status: response.status });
-}
-
-/**
+ * @param {() => Promise<string | undefined>} getToken
  * @param {string} path
- * @param {{ method?: string, body?: unknown, headers?: Record<string, string> }} [options]
+ * @param {RequestInit} [options]
  */
-export async function apiFetch(path, options = {}) {
-  const { method = "GET", body, headers: extraHeaders = {} } = options;
-  await keycloak.updateToken(30).catch(() => keycloak.login());
-  const token = keycloak.token;
-  if (!token) {
-    throw new ApiError("Not authenticated", { status: 401 });
+export async function apiRequest(getToken, path, options = {}) {
+  const token = await getToken();
+  const headers = new Headers(options.headers);
+  if (!headers.has("Content-Type") && options.body != null) {
+    headers.set("Content-Type", "application/json");
   }
-  const url = `${apiBase()}${path.startsWith("/") ? path : `/${path}`}`;
-  /** @type {Record<string, string>} */
-  const headers = {
-    Accept: "application/json",
-    ...extraHeaders,
-    Authorization: `Bearer ${token}`,
-  };
-  if (body !== undefined) {
-    headers["Content-Type"] = "application/json";
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(path, { ...options, headers });
+  const text = await res.text();
+  let body = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = text;
+    }
   }
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  if (response.status === 204) {
-    return null;
+  if (!res.ok) {
+    const msg =
+      typeof body === "object" && body && "error" in body ? String(body.error) : res.statusText;
+    const err = new Error(msg || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.body = body;
+    throw err;
   }
-  const contentType = response.headers.get("content-type") || "";
-  if (!response.ok) {
-    throw await parseErrorBody(response);
-  }
-  if (!contentType.includes("application/json")) {
-    return null;
-  }
-  return response.json();
+  return body;
 }

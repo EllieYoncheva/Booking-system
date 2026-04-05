@@ -6,14 +6,12 @@ import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
 import { createServer as createViteServer } from "vite";
 import { config } from "./config.js";
-import { httpErrorHandler } from "./errors/httpErrorHandler.js";
-import { loadAppUser } from "./middleware/loadAppUser.js";
-import { verifyKeycloakJwt, requireRole } from "./middleware/keycloakJwt.js";
-import adminRoutes from "./routes/adminRoutes.js";
-import bookingRoutes from "./routes/bookingRoutes.js";
-import classRoutes from "./routes/classRoutes.js";
+import { checkDatabaseConnection } from "./db/pool.js";
+import { verifyKeycloakJwt } from "./middleware/keycloakJwt.js";
 import keycloakAdminRoutes from "./routes/keycloakAdminRoutes.js";
-import meRoutes from "./routes/meRoutes.js";
+import clientBookingRoutes from "./routes/clientBookingRoutes.js";
+import adminCatalogRoutes from "./routes/adminCatalogRoutes.js";
+import { ensureAppUser } from "./services/userSyncService.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../..");
@@ -24,30 +22,33 @@ async function createApp() {
   const app = express();
   app.use(express.json());
 
-  app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, service: "booking-system-api" });
-  });
-
-  app.get("/api/me", verifyKeycloakJwt(true), (req, res) => {
+  app.get("/api/health", async (_req, res) => {
+    const database = await checkDatabaseConnection();
     res.json({
-      sub: req.user.sub,
-      preferredUsername: req.user.preferredUsername,
-      email: req.user.email,
-      givenName: req.user.givenName,
-      familyName: req.user.familyName,
-      roles: req.user.roles,
+      ok: true,
+      service: "booking-system-api",
+      database,
     });
   });
 
-  app.use("/api/classes", classRoutes);
-
-  app.use("/api/me", verifyKeycloakJwt(true), loadAppUser(), meRoutes);
-
-  app.use("/api", verifyKeycloakJwt(true), loadAppUser(), bookingRoutes);
-
-  app.use("/api/admin", verifyKeycloakJwt(true), requireRole("admin"), loadAppUser(), adminRoutes);
+  app.get("/api/me", verifyKeycloakJwt(true), async (req, res, next) => {
+    try {
+      const appUser = await ensureAppUser(req.user);
+      res.json({
+        sub: req.user.sub,
+        preferredUsername: req.user.preferredUsername,
+        email: req.user.email,
+        roles: req.user.roles,
+        appUser,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   app.use("/api/keycloak-admin", keycloakAdminRoutes);
+  app.use("/api", clientBookingRoutes);
+  app.use("/api/admin", adminCatalogRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found" });
@@ -82,7 +83,10 @@ async function createApp() {
     app.use(vite.middlewares);
   }
 
-  app.use(httpErrorHandler);
+  app.use((err, _req, res, _next) => {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  });
 
   return { listenable: httpServer ?? app };
 }
