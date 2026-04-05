@@ -6,8 +6,14 @@ import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
 import { createServer as createViteServer } from "vite";
 import { config } from "./config.js";
-import { verifyKeycloakJwt } from "./middleware/keycloakJwt.js";
+import { httpErrorHandler } from "./errors/httpErrorHandler.js";
+import { loadAppUser } from "./middleware/loadAppUser.js";
+import { verifyKeycloakJwt, requireRole } from "./middleware/keycloakJwt.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import classRoutes from "./routes/classRoutes.js";
 import keycloakAdminRoutes from "./routes/keycloakAdminRoutes.js";
+import meRoutes from "./routes/meRoutes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../..");
@@ -27,9 +33,19 @@ async function createApp() {
       sub: req.user.sub,
       preferredUsername: req.user.preferredUsername,
       email: req.user.email,
+      givenName: req.user.givenName,
+      familyName: req.user.familyName,
       roles: req.user.roles,
     });
   });
+
+  app.use("/api/classes", classRoutes);
+
+  app.use("/api/me", verifyKeycloakJwt(true), loadAppUser(), meRoutes);
+
+  app.use("/api", verifyKeycloakJwt(true), loadAppUser(), bookingRoutes);
+
+  app.use("/api/admin", verifyKeycloakJwt(true), requireRole("admin"), loadAppUser(), adminRoutes);
 
   app.use("/api/keycloak-admin", keycloakAdminRoutes);
 
@@ -66,10 +82,7 @@ async function createApp() {
     app.use(vite.middlewares);
   }
 
-  app.use((err, _req, res, _next) => {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  });
+  app.use(httpErrorHandler);
 
   return { listenable: httpServer ?? app };
 }
