@@ -1,0 +1,16 @@
+{
+  "name": "booking-system-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.error('Run npm run dev from the repository root.'); process.exit(1)\"",
+    "build": "node ../server/scripts/build-client.mjs",
+    "preview": "node -e \"console.error('Use: npm run dev (root) for dev, or serve client/dist with any static server.'); process.exit(1)\""
+  },
+  "dependencies": {
+    "keycloak-js": "^26.0.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

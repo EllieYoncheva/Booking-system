@@ -1,0 +1,75 @@
+{
+  "realm": "booking-system",
+  "enabled": true,
+  "displayName": "Booking System (Pilates Studio)",
+  "displayNameHtml": "<strong>Booking System</strong>",
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "Registered client — book classes, manage profile",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "admin",
+        "description": "Studio administrator",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "defaultRoles": ["user"],
+  "clients": [
+    {
+      "clientId": "booking-system-web",
+      "name": "Booking System Web (React SPA)",
+      "description": "Public browser client with PKCE — matches VITE_KEYCLOAK_CLIENT_ID",
+      "rootUrl": "http://localhost:3001",
+      "adminUrl": "http://localhost:3001",
+      "baseUrl": "http://localhost:3001",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "frontchannelLogout": true,
+      "redirectUris": ["http://localhost:3001/*"],
+      "webOrigins": ["http://localhost:3001"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3001/*"
+      }
+    },
+    {
+      "clientId": "booking-api",
+      "name": "Booking API (Node.js service account)",
+      "description": "Confidential client — set Client secret in server/.env KEYCLOAK_ADMIN_CLIENT_SECRET; enable service account roles for realm-management (manage-users, view-users, manage-realm) in Admin Console",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "CHANGE_ME_BOOKING_API_SECRET",
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ]
+}
