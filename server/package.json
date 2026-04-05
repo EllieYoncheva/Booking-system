@@ -7,7 +7,6 @@
     "dev": "node src/index.js",
     "start": "node src/index.js",
     "db:create": "node scripts/create-database.mjs",
-    "db:schema": "node scripts/apply-schema.mjs",
     "db:seed": "node scripts/seed-demo.mjs"
   },
   "dependencies": {

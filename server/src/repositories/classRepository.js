@@ -1,4 +1,5 @@
 import { getPool } from "../db/pool.js";
+import { toMysqlDateTime } from "../utils/mysqlDateTime.js";
 
 const classSelectJoins = `
   SELECT c.*,
@@ -82,8 +83,8 @@ export async function insertClass(row) {
     [
       row.name ?? null,
       row.description ?? null,
-      row.startsAt,
-      row.endsAt,
+      toMysqlDateTime(row.startsAt),
+      toMysqlDateTime(row.endsAt),
       row.price ?? null,
       row.capacity,
       row.serviceId,
@@ -113,7 +114,9 @@ export async function updateClass(id, patch) {
   const keys = allowed.filter((k) => patch[k] !== undefined);
   if (keys.length === 0) return;
   const set = keys.map((k) => `\`${k}\` = ?`).join(", ");
-  const values = keys.map((k) => patch[k]);
+  const values = keys.map((k) =>
+    k === "startsAt" || k === "endsAt" ? toMysqlDateTime(patch[k]) : patch[k]
+  );
   values.push(id);
   await pool.query(`UPDATE \`Classes\` SET ${set} WHERE \`id\` = ?`, values);
 }
