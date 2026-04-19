@@ -34,6 +34,8 @@
  * @property {Date|string} createdAt
  * @property {Date|string} updatedAt
  * @property {Date|string|null} deletedAt
+ * @property {string|null} notes admin-editable client notes
+ * @property {string|null} internalNotes staff-only notes
  */
 
 /**
@@ -96,6 +98,7 @@
  * @property {ReservationStatus} status
  * @property {number} userId
  * @property {number} classId
+ * @property {string|null} adminCancelReason reason when admin declined
  */
 
 /**

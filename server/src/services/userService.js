@@ -81,3 +81,66 @@ export async function findOrCreateFromKeycloakUser(kc) {
 export async function listUsers(opts) {
   return userRepository.listUsers(opts);
 }
+
+/**
+ * @param {{ limit?: number, offset?: number, search?: string }} opts
+ */
+export async function listClientsForAdmin(opts) {
+  return userRepository.listUsersByRole("client", opts);
+}
+
+/**
+ * @param {number} id
+ */
+export async function getClientForAdmin(id) {
+  const user = await userRepository.findUserById(id);
+  if (!user) throw new AppError("User not found", 404, "USER_NOT_FOUND");
+  if (user.role !== "client") {
+    throw new AppError("Not a client record", 404, "USER_NOT_FOUND");
+  }
+  return user;
+}
+
+/**
+ * @param {number} id
+ * @param {Record<string, unknown>} body
+ */
+export async function updateClientForAdmin(id, body) {
+  await getClientForAdmin(id);
+  const patch = {};
+  if (body.firstName !== undefined) {
+    const v = String(body.firstName).trim().slice(0, 100);
+    if (!v) throw new AppError("firstName is required when provided", 400, "VALIDATION");
+    patch.firstName = v;
+  }
+  if (body.lastName !== undefined) {
+    const v = String(body.lastName).trim().slice(0, 100);
+    if (!v) throw new AppError("lastName is required when provided", 400, "VALIDATION");
+    patch.lastName = v;
+  }
+  if (body.email !== undefined) {
+    const email = String(body.email).trim().slice(0, 255);
+    if (!email) throw new AppError("email is required when provided", 400, "VALIDATION");
+    const existing = await userRepository.findUserByEmail(email);
+    if (existing && existing.id !== id) {
+      throw new AppError("Email already in use", 409, "EMAIL_IN_USE");
+    }
+    patch.email = email;
+  }
+  if (body.phone !== undefined) {
+    patch.phone =
+      body.phone == null || String(body.phone).trim() === ""
+        ? null
+        : String(body.phone).trim().slice(0, 32);
+  }
+  if (body.notes !== undefined) {
+    patch.notes = body.notes == null ? null : String(body.notes).slice(0, 65535);
+  }
+  if (body.internalNotes !== undefined) {
+    patch.internalNotes = body.internalNotes == null ? null : String(body.internalNotes).slice(0, 65535);
+  }
+  if (Object.keys(patch).length === 0) {
+    return userRepository.findUserById(id);
+  }
+  return userRepository.updateUser(id, patch);
+}

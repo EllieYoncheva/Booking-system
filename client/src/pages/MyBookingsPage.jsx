@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
+import { RESERVATION_STATUS_BG } from "../utils/reservationStatusBg.js";
 
-const STATUS_BG = {
-  pending: "Чака потвърждение",
-  confirmed: "Потвърдена",
+const MY_STATUS_LABELS = {
+  ...RESERVATION_STATUS_BG,
   cancelled_by_user: "Анулирана от вас",
-  cancelled_by_admin: "Анулирана от админ",
-  no_show: "Неявяване",
 };
 
 function formatWhen(iso) {
@@ -80,7 +78,7 @@ export default function MyBookingsPage() {
                     {formatWhen(r.classStartsAt)} – {formatWhen(r.classEndsAt)}
                   </td>
                   <td>{r.studioName}</td>
-                  <td>{STATUS_BG[r.status] ?? r.status}</td>
+                  <td>{MY_STATUS_LABELS[r.status] ?? r.status}</td>
                   <td>
                     {canCancel(r.status) && (
                       <button

@@ -7,6 +7,10 @@ import StudiosAdminPage from "./pages/admin/StudiosAdminPage.jsx";
 import ServicesAdminPage from "./pages/admin/ServicesAdminPage.jsx";
 import InstructorsAdminPage from "./pages/admin/InstructorsAdminPage.jsx";
 import ClassesAdminPage from "./pages/admin/ClassesAdminPage.jsx";
+import ClientsAdminPage from "./pages/admin/ClientsAdminPage.jsx";
+import ClientDetailAdminPage from "./pages/admin/ClientDetailAdminPage.jsx";
+import ReservationsAdminPage from "./pages/admin/ReservationsAdminPage.jsx";
+import BookingSettingsAdminPage from "./pages/admin/BookingSettingsAdminPage.jsx";
 
 export default function App() {
   return (
@@ -21,6 +25,10 @@ export default function App() {
           <Route path="services" element={<ServicesAdminPage />} />
           <Route path="instructors" element={<InstructorsAdminPage />} />
           <Route path="classes" element={<ClassesAdminPage />} />
+          <Route path="clients" element={<ClientsAdminPage />} />
+          <Route path="clients/:id" element={<ClientDetailAdminPage />} />
+          <Route path="reservations" element={<ReservationsAdminPage />} />
+          <Route path="booking-settings" element={<BookingSettingsAdminPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/schedule" replace />} />

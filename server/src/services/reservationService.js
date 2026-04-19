@@ -41,7 +41,7 @@ export async function createReservation(input) {
   }
 
   try {
-    return await reservationRepository.insertReservation({
+    return await reservationRepository.insertReservationWithPool({
       userId: input.appUserId,
       classId: input.classId,
       status: "pending",
@@ -55,7 +55,7 @@ export async function createReservation(input) {
 }
 
 /**
- * @param {{ reservationId: number, actor: Actor }} input
+ * @param {{ reservationId: number, actor: Actor, reason?: string|null }} input
  */
 export async function cancelReservation(input) {
   const resv = await reservationRepository.findReservationById(input.reservationId);
@@ -70,15 +70,35 @@ export async function cancelReservation(input) {
   }
 
   const status = input.actor.isAdmin ? "cancelled_by_admin" : "cancelled_by_user";
-  return reservationRepository.updateReservationStatus(resv.id, status, new Date());
+  const reason =
+    input.actor.isAdmin && input.reason != null && String(input.reason).trim()
+      ? String(input.reason).trim().slice(0, 500)
+      : null;
+  return reservationRepository.updateReservationStatus(resv.id, status, new Date(), {
+    adminCancelReason: input.actor.isAdmin ? reason : null,
+  });
 }
 
 /**
- * Admin-only: set operational status (does not set cancel timestamps).
+ * Admin-only: set operational status (does not set cancel timestamps unless you pass cancelledAt).
  * @param {{ reservationId: number, status: 'pending'|'confirmed'|'no_show' }} input
  */
 export async function patchReservationStatusAdmin(input) {
   const resv = await reservationRepository.findReservationById(input.reservationId);
   assertFound(resv, "Reservation not found", "RESERVATION_NOT_FOUND");
-  return reservationRepository.updateReservationStatus(resv.id, input.status, resv.cancelledAt);
+  return reservationRepository.updateReservationStatus(resv.id, input.status, resv.cancelledAt, {});
+}
+
+/**
+ * @param {number} reservationId
+ */
+export async function confirmReservationAdmin(reservationId) {
+  const resv = await reservationRepository.findReservationById(reservationId);
+  assertFound(resv, "Reservation not found", "RESERVATION_NOT_FOUND");
+  if (resv.status !== "pending") {
+    throw new AppError("Only pending reservations can be confirmed", 400, "INVALID_STATUS");
+  }
+  return reservationRepository.updateReservationStatus(reservationId, "confirmed", null, {
+    adminCancelReason: null,
+  });
 }

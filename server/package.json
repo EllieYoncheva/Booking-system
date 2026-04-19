@@ -7,6 +7,8 @@
     "dev": "node src/index.js",
     "start": "node src/index.js",
     "db:create": "node scripts/create-database.mjs",
+    "db:migrate": "knex migrate:latest --knexfile knexfile.js",
+    "db:ensure-admin-schema": "node scripts/ensure-admin-schema.mjs",
     "db:seed": "node scripts/seed-demo.mjs"
   },
   "dependencies": {

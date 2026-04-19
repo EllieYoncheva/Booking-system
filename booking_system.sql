@@ -10,6 +10,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `Subscription`;
+DROP TABLE IF EXISTS `AppSettings`;
 DROP TABLE IF EXISTS `Notifications`;
 DROP TABLE IF EXISTS `Waitlist`;
 DROP TABLE IF EXISTS `Reservations`;
@@ -30,6 +31,8 @@ CREATE TABLE `Users` (
   `keycloakSub` VARCHAR(255) NULL COMMENT 'OIDC sub from Keycloak; unique when set',
   `passwordHash` VARCHAR(255) NULL COMMENT 'Hash only (bcrypt/argon2); NULL if not set yet',
   `role` ENUM('admin', 'client') NOT NULL DEFAULT 'client',
+  `notes` TEXT NULL COMMENT 'Admin-editable client notes',
+  `internalNotes` TEXT NULL COMMENT 'Staff-only notes',
   `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `deletedAt` DATETIME(6) NULL,
@@ -120,6 +123,7 @@ CREATE TABLE `Reservations` (
   `status` ENUM('pending', 'confirmed', 'cancelled_by_user', 'cancelled_by_admin', 'no_show') NOT NULL DEFAULT 'pending',
   `userId` INT NOT NULL,
   `classId` INT NOT NULL,
+  `adminCancelReason` VARCHAR(500) NULL COMMENT 'When status is cancelled_by_admin',
   `activeSlot` TINYINT UNSIGNED GENERATED ALWAYS AS (
     CASE WHEN `status` IN ('pending', 'confirmed') THEN 1 ELSE NULL END
   ) STORED,
@@ -194,6 +198,15 @@ CREATE TABLE `Notifications` (
     ON DELETE SET NULL
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `AppSettings` (
+  `key` VARCHAR(64) NOT NULL,
+  `value` TEXT NOT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `AppSettings` (`key`, `value`) VALUES ('booking.autoConfirm', 'false')
+  ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
 
 CREATE TABLE `Subscription` (
   `id` INT NOT NULL AUTO_INCREMENT,

@@ -3,6 +3,7 @@ import { verifyKeycloakJwt } from "../middleware/keycloakJwt.js";
 import { attachAppUser } from "../middleware/attachAppUser.js";
 import * as classRepository from "../repositories/classRepository.js";
 import * as reservationRepository from "../repositories/reservationRepository.js";
+import * as appSettingsService from "../services/appSettingsService.js";
 
 const router = Router();
 
@@ -37,7 +38,10 @@ router.post("/classes/:classId/reservations", async (req, res, next) => {
     if (!Number.isInteger(classId) || classId < 1) {
       return res.status(400).json({ error: "Invalid class id" });
     }
-    const result = await reservationRepository.tryBookClass(req.appUser.id, classId);
+    const autoConfirm = await appSettingsService.getAutoConfirmBookings();
+    const result = await reservationRepository.tryBookClass(req.appUser.id, classId, {
+      initialStatus: autoConfirm ? "confirmed" : "pending",
+    });
     if (!result.ok) {
       const map = {
         CLASS_NOT_FOUND: { status: 404, error: "Класът не е намерен" },

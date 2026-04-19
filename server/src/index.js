@@ -11,6 +11,7 @@ import { verifyKeycloakJwt } from "./middleware/keycloakJwt.js";
 import keycloakAdminRoutes from "./routes/keycloakAdminRoutes.js";
 import clientBookingRoutes from "./routes/clientBookingRoutes.js";
 import adminCatalogRoutes from "./routes/adminCatalogRoutes.js";
+import adminOperationsRoutes from "./routes/adminOperationsRoutes.js";
 import { ensureAppUser } from "./services/userSyncService.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -47,8 +48,11 @@ async function createApp() {
   });
 
   app.use("/api/keycloak-admin", keycloakAdminRoutes);
-  app.use("/api", clientBookingRoutes);
+  // Register `/api/admin` before `/api` so `/api/admin/*` is not handled by the client booking router
+  // (mounted at `/api`), which would otherwise leave `/admin/...` unmatched and fall through to 404.
   app.use("/api/admin", adminCatalogRoutes);
+  app.use("/api/admin", adminOperationsRoutes);
+  app.use("/api", clientBookingRoutes);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found" });

@@ -141,6 +141,17 @@ export async function countReservationsForClass(conn, classId) {
   return Number(rows[0]?.cnt ?? 0);
 }
 
+/** Active (pending + confirmed) reservations for a class — pool (no transaction). */
+export async function countActiveReservationsForClass(classId) {
+  const pool = getPool();
+  if (!pool) return 0;
+  const [rows] = await pool.query(
+    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ? AND `status` IN ('pending', 'confirmed')",
+    [classId]
+  );
+  return Number(rows[0]?.cnt ?? 0);
+}
+
 export async function countReservationsAnyStatus(conn, classId) {
   const [rows] = await conn.query(
     "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ?",
