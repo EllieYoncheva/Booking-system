@@ -11,6 +11,7 @@ import ClientsAdminPage from "./pages/admin/ClientsAdminPage.jsx";
 import ClientDetailAdminPage from "./pages/admin/ClientDetailAdminPage.jsx";
 import ReservationsAdminPage from "./pages/admin/ReservationsAdminPage.jsx";
 import BookingSettingsAdminPage from "./pages/admin/BookingSettingsAdminPage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route index element={<Navigate to="/schedule" replace />} />
         <Route path="schedule" element={<SchedulePage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route path="admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="studios" replace />} />
           <Route path="studios" element={<StudiosAdminPage />} />

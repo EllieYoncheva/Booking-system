@@ -40,18 +40,18 @@ export async function findOrCreateFromKeycloakUser(kc) {
 
   const dbRole = deriveDbRole(kc);
   const email = deriveEmail(kc);
-  const { firstName, lastName } = deriveNames(kc);
 
   let user = await userRepository.findUserByKeycloakSub(kc.sub);
   if (user) {
     const patch = {};
     if (user.role !== dbRole) patch.role = dbRole;
     if (user.email !== email) patch.email = email;
-    if (user.firstName !== firstName) patch.firstName = firstName;
-    if (user.lastName !== lastName) patch.lastName = lastName;
+    // Names are editable in-app; do not overwrite on each login once the row exists.
     if (Object.keys(patch).length) user = await userRepository.updateUser(user.id, patch);
     return user;
   }
+
+  const { firstName, lastName } = deriveNames(kc);
 
   const byEmail = await userRepository.findUserByEmail(email);
   if (byEmail) {
@@ -105,6 +105,37 @@ export async function getClientForAdmin(id) {
  * @param {number} id
  * @param {Record<string, unknown>} body
  */
+/**
+ * Update the authenticated user's own profile (names and phone in `Users`).
+ * @param {{ sub: string }} kc
+ * @param {Record<string, unknown>} body
+ */
+export async function updateMyProfile(kc, body) {
+  if (!kc?.sub) throw new AppError("Not authenticated", 401, "UNAUTHORIZED");
+  const user = await findOrCreateFromKeycloakUser(kc);
+  const patch = {};
+  if (body.firstName !== undefined) {
+    const v = String(body.firstName).trim().slice(0, 100);
+    if (!v) throw new AppError("firstName is required when provided", 400, "VALIDATION");
+    patch.firstName = v;
+  }
+  if (body.lastName !== undefined) {
+    const v = String(body.lastName).trim().slice(0, 100);
+    if (!v) throw new AppError("lastName is required when provided", 400, "VALIDATION");
+    patch.lastName = v;
+  }
+  if (body.phone !== undefined) {
+    patch.phone =
+      body.phone == null || String(body.phone).trim() === ""
+        ? null
+        : String(body.phone).trim().slice(0, 32);
+  }
+  if (Object.keys(patch).length === 0) {
+    throw new AppError("No fields to update", 400, "EMPTY_PATCH");
+  }
+  return userRepository.updateUser(user.id, patch);
+}
+
 export async function updateClientForAdmin(id, body) {
   await getClientForAdmin(id);
   const patch = {};

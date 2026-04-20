@@ -46,7 +46,12 @@ export default function Layout() {
             База:{" "}
             {dbOk === null ? "…" : dbOk ? <span className="ok">свързана</span> : "няма връзка"}
           </span>
-          <span>{userLabel}</span>
+          <NavLink
+            to="/profile"
+            className={({ isActive }) => `app-meta-user${isActive ? " is-active" : ""}`}
+          >
+            {userLabel}
+          </NavLink>
           <button type="button" onClick={() => keycloak.logout()}>
             Изход
           </button>

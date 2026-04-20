@@ -13,6 +13,14 @@ import clientBookingRoutes from "./routes/clientBookingRoutes.js";
 import adminCatalogRoutes from "./routes/adminCatalogRoutes.js";
 import adminOperationsRoutes from "./routes/adminOperationsRoutes.js";
 import { ensureAppUser } from "./services/userSyncService.js";
+import * as userService from "./services/userService.js";
+import { AppError } from "./errors/AppError.js";
+
+function userForApiResponse(user) {
+  if (!user) return user;
+  const { passwordHash: _p, internalNotes: _i, ...rest } = user;
+  return rest;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../..");
@@ -40,9 +48,27 @@ async function createApp() {
         preferredUsername: req.user.preferredUsername,
         email: req.user.email,
         roles: req.user.roles,
-        appUser,
+        appUser: userForApiResponse(appUser),
       });
     } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch("/api/me", verifyKeycloakJwt(true), async (req, res, next) => {
+    try {
+      const appUser = await userService.updateMyProfile(req.user, req.body ?? {});
+      res.json({
+        sub: req.user.sub,
+        preferredUsername: req.user.preferredUsername,
+        email: req.user.email,
+        roles: req.user.roles,
+        appUser: userForApiResponse(appUser),
+      });
+    } catch (err) {
+      if (err instanceof AppError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
       next(err);
     }
   });
