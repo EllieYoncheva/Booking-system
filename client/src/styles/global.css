@@ -196,6 +196,22 @@ button.danger {
   border-color: transparent;
 }
 
+/** Schedule: waitlist join — distinct from primary (accent) reserve */
+button.waitlist-cta {
+  background: var(--schedule-line-warm);
+  color: #1c1508;
+  border-color: color-mix(in srgb, var(--schedule-line-warm) 65%, #000 35%);
+  font-weight: 600;
+}
+
+button.waitlist-cta:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+button.waitlist-cta:disabled {
+  opacity: 0.55;
+}
+
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;

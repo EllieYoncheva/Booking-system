@@ -65,6 +65,7 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bookingId, setBookingId] = useState(null);
+  const [waitlistActionId, setWaitlistActionId] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -90,10 +91,33 @@ export default function SchedulePage() {
       .finally(() => setBookingId(null));
   };
 
+  const joinWaitlist = (classId) => {
+    setWaitlistActionId(classId);
+    setError("");
+    apiRequest(getToken, `/api/classes/${classId}/reservations`, {
+      method: "POST",
+      body: JSON.stringify({ joinWaitlist: true }),
+    })
+      .then(() => load())
+      .catch((e) => setError(e.message))
+      .finally(() => setWaitlistActionId(null));
+  };
+
+  const leaveWaitlist = (classId) => {
+    setWaitlistActionId(classId);
+    setError("");
+    apiRequest(getToken, `/api/me/reservations/waitlist/${classId}`, { method: "DELETE" })
+      .then(() => load())
+      .catch((e) => setError(e.message))
+      .finally(() => setWaitlistActionId(null));
+  };
+
   return (
     <main className="page page--schedule">
       <h2>График на класове</h2>
-      <p className="muted">Показват се предстоящи класове със свободни места.</p>
+      <p className="muted">
+        Показват се предстоящи класове. При запълнен клас може да се запишете на листа на изчакване.
+      </p>
       {error && <div className="error-banner">{error}</div>}
       {loading ? (
         <p>Зареждане…</p>
@@ -113,6 +137,10 @@ export default function SchedulePage() {
                 {dayClasses.map((c) => {
                   const spots = Number(c.spotsLeft);
                   const busy = bookingId === c.id;
+                  const waitBusy = waitlistActionId === c.id;
+                  const onWaitlist = Number(c.onWaitlist) === 1;
+                  const myHasReservation = Number(c.myHasReservation) === 1;
+                  const full = Number.isFinite(spots) && spots < 1;
                   const mins = durationMinutes(String(c.startsAt), String(c.endsAt));
                   const title =
                     typeof c.name === "string" && c.name.trim() ? c.name.trim() : String(c.serviceName ?? "Клас");
@@ -146,15 +174,40 @@ export default function SchedulePage() {
                           ) : null}
                         </div>
                         <div className="schedule-card-actions">
-                          <button
-                            type="button"
-                            className="primary"
-                            disabled={!Number.isFinite(spots) || spots < 1 || busy}
-                            onClick={() => book(c.id)}
-                          >
-                            {busy ? "…" : "Резервирай"}
-                          </button>
-                        
+                          {myHasReservation ? (
+                            <span className="muted small">Резервирано</span>
+                          ) : full ? (
+                            onWaitlist ? (
+                              <>
+                                <span className="muted small">На листа за изчакване</span>
+                                <button
+                                  type="button"
+                                  disabled={waitBusy}
+                                  onClick={() => leaveWaitlist(c.id)}
+                                >
+                                  {waitBusy ? "…" : "Отпиши се"}
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                className="waitlist-cta"
+                                disabled={waitBusy}
+                                onClick={() => joinWaitlist(c.id)}
+                              >
+                                {waitBusy ? "…" : "Листа на изчакване"}
+                              </button>
+                            )
+                          ) : (
+                            <button
+                              type="button"
+                              className="primary"
+                              disabled={!Number.isFinite(spots) || spots < 1 || busy}
+                              onClick={() => book(c.id)}
+                            >
+                              {busy ? "…" : "Резервирай"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </li>

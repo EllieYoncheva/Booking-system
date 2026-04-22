@@ -24,8 +24,9 @@ const spotsSubquery = `
 
 /**
  * @param {{ from?: string, to?: string }} [range]
+ * @param {number|null} [forUserId] when set, adds `onWaitlist` and `myHasReservation` flags for that user
  */
-export async function listPublicClassesWithSpots(range = {}) {
+export async function listPublicClassesWithSpots(range = {}, forUserId = null) {
   const pool = getPool();
   if (!pool) return [];
   const conditions = ["c.`cancellationReason` IS NULL", "c.`startsAt` >= NOW(6)"];
@@ -39,6 +40,21 @@ export async function listPublicClassesWithSpots(range = {}) {
     params.push(range.to);
   }
   const where = conditions.join(" AND ");
+  const userId =
+    forUserId != null && Number.isInteger(forUserId) && forUserId > 0 ? forUserId : null;
+  const userFlags =
+    userId != null
+      ? `, EXISTS (
+          SELECT 1 FROM \`Waitlist\` w WHERE w.classId = c.id AND w.userId = ?
+        ) AS onWaitlist
+        , EXISTS (
+          SELECT 1 FROM \`Reservations\` r
+          WHERE r.classId = c.id AND r.userId = ? AND r.status IN ('pending', 'confirmed')
+        ) AS myHasReservation`
+      : ", FALSE AS onWaitlist, FALSE AS myHasReservation";
+  if (userId != null) {
+    params.push(userId, userId);
+  }
   const [rows] = await pool.query(
     `SELECT c.*,
       s.name AS serviceName,
@@ -46,6 +62,7 @@ export async function listPublicClassesWithSpots(range = {}) {
       i.firstName AS instructorFirstName,
       i.lastName AS instructorLastName,
       (c.capacity - COALESCE(rc.taken, 0)) AS spotsLeft
+      ${userFlags}
     FROM \`Classes\` c
     INNER JOIN \`Services\` s ON s.id = c.serviceId AND s.deletedAt IS NULL
     INNER JOIN \`Studios\` st ON st.id = c.studioId AND st.deletedAt IS NULL
