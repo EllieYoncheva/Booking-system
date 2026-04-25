@@ -7,7 +7,7 @@ export default function ServicesAdminPage() {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({ name: "", description: "", duration: "60" });
 
   const load = () =>
     apiRequest(getToken, "/api/admin/services")
@@ -20,13 +20,18 @@ export default function ServicesAdminPage() {
 
   const reset = () => {
     setEditingId(null);
-    setForm({ name: "", description: "" });
+    setForm({ name: "", description: "", duration: "60" });
   };
 
   const save = (e) => {
     e.preventDefault();
     setError("");
-    const body = JSON.stringify(form);
+    const duration = Number(form.duration);
+    if (!Number.isInteger(duration) || duration < 1) {
+      setError("Продължителността трябва да е положително число.");
+      return;
+    }
+    const body = JSON.stringify({ ...form, duration });
     const req =
       editingId == null
         ? apiRequest(getToken, "/api/admin/services", { method: "POST", body })
@@ -39,7 +44,7 @@ export default function ServicesAdminPage() {
 
   const edit = (r) => {
     setEditingId(r.id);
-    setForm({ name: r.name ?? "", description: r.description ?? "" });
+    setForm({ name: r.name ?? "", description: r.description ?? "", duration: String(r.duration ?? 60) });
   };
 
   const remove = (id) => {
@@ -68,6 +73,16 @@ export default function ServicesAdminPage() {
             Описание
             <textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </label>
+          <label>
+            Продължителност (минути) *
+            <input
+              required
+              type="number"
+              min={1}
+              value={form.duration}
+              onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+            />
+          </label>
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button type="submit" className="primary">
               {editingId == null ? "Създай" : "Запази"}
@@ -86,6 +101,7 @@ export default function ServicesAdminPage() {
             <tr>
               <th>Име</th>
               <th>Описание</th>
+              <th>Продължителност</th>
               <th></th>
             </tr>
           </thead>
@@ -94,6 +110,7 @@ export default function ServicesAdminPage() {
               <tr key={r.id}>
                 <td>{r.name}</td>
                 <td>{r.description || "—"}</td>
+                <td>{r.duration} мин</td>
                 <td>
                   <button type="button" onClick={() => edit(r)}>
                     Редакция

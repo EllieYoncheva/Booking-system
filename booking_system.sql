@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS `AppSettings`;
 DROP TABLE IF EXISTS `Notifications`;
 DROP TABLE IF EXISTS `Waitlist`;
 DROP TABLE IF EXISTS `Reservations`;
+DROP TABLE IF EXISTS `Schedules`;
 DROP TABLE IF EXISTS `Classes`;
 DROP TABLE IF EXISTS `Instructors`;
 DROP TABLE IF EXISTS `Services`;
@@ -60,10 +61,12 @@ CREATE TABLE `Services` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(160) NOT NULL,
   `description` VARCHAR(500) NULL,
+  `duration` INT NOT NULL DEFAULT 60,
   `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `deletedAt` DATETIME(6) NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  CONSTRAINT `chk_Services_duration` CHECK (`duration` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `Instructors` (
@@ -90,12 +93,15 @@ CREATE TABLE `Classes` (
   `serviceId` INT NOT NULL,
   `studioId` INT NOT NULL,
   `instructorId` INT NOT NULL,
+  `scheduleId` INT NULL,
   `cancellationReason` VARCHAR(500) NULL,
   PRIMARY KEY (`id`),
   KEY `fk_Classes_Services_idx` (`serviceId`),
   KEY `fk_Classes_Studios_idx` (`studioId`, `startsAt`),
   KEY `idx_Classes_startsAt` (`startsAt`),
   KEY `fk_Classes_Instructors_idx` (`instructorId`),
+  KEY `fk_Classes_Schedules_idx` (`scheduleId`),
+  UNIQUE KEY `uq_Classes_schedule_start` (`scheduleId`, `startsAt`),
   CONSTRAINT `fk_Classes_Services`
     FOREIGN KEY (`serviceId`)
     REFERENCES `Services` (`id`)
@@ -114,6 +120,30 @@ CREATE TABLE `Classes` (
   CONSTRAINT `chk_Classes_time` CHECK (`endsAt` > `startsAt`),
   CONSTRAINT `chk_Classes_capacity` CHECK (`capacity` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `Schedules` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `classId` INT NOT NULL,
+  `recurrenceRule` VARCHAR(255) NOT NULL,
+  `startDate` DATE NOT NULL,
+  `endDate` DATE NULL,
+  `daysOfWeek` JSON NULL,
+  `startTime` TIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_Schedules_Classes_idx` (`classId`),
+  CONSTRAINT `fk_Schedules_Classes`
+    FOREIGN KEY (`classId`)
+    REFERENCES `Classes` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `Classes`
+  ADD CONSTRAINT `fk_Classes_Schedules`
+  FOREIGN KEY (`scheduleId`)
+  REFERENCES `Schedules` (`id`)
+  ON DELETE SET NULL
+  ON UPDATE CASCADE;
 
 -- Reservations: at most one active (pending or confirmed) row per user per class (see activeSlot + UNIQUE).
 CREATE TABLE `Reservations` (

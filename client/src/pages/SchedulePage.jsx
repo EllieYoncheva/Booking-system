@@ -38,13 +38,6 @@ function formatTime(iso) {
   }
 }
 
-/** @param {string} startIso @param {string} endIso */
-function durationMinutes(startIso, endIso) {
-  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
-  if (!Number.isFinite(ms) || ms <= 0) return null;
-  return Math.round(ms / 60000);
-}
-
 /**
  * @param {Array<Record<string, unknown>>} classes
  * @returns {Array<[string, Array<Record<string, unknown>>]>}
@@ -85,7 +78,10 @@ export default function SchedulePage() {
     setBookingId(classId);
     setError("");
     apiRequest(getToken, `/api/classes/${classId}/reservations`, { method: "POST" })
-      .then(() => load())
+      .then(() => {
+        window.alert("Резервацията е създадена успешно.");
+        return load();
+      })
       .catch((e) => setError(e.message))
       .finally(() => setBookingId(null));
   };
@@ -113,7 +109,7 @@ export default function SchedulePage() {
                 {dayClasses.map((c) => {
                   const spots = Number(c.spotsLeft);
                   const busy = bookingId === c.id;
-                  const mins = durationMinutes(String(c.startsAt), String(c.endsAt));
+                  const mins = Number(c.serviceDuration);
                   const title =
                     typeof c.name === "string" && c.name.trim() ? c.name.trim() : String(c.serviceName ?? "Клас");
                   const cap = Number(c.capacity);
@@ -135,7 +131,9 @@ export default function SchedulePage() {
                     <li key={c.id} className="schedule-card">
                       <div className="schedule-card-time">
                         <span className="schedule-card-time-start">{formatTime(String(c.startsAt))}</span>
-                        {mins != null && <span className="schedule-card-time-duration">{mins} мин</span>}
+                        {Number.isFinite(mins) && mins > 0 && (
+                          <span className="schedule-card-time-duration">{mins} мин</span>
+                        )}
                       </div>
                       <div className="schedule-card-main">
                         <div className="schedule-card-text">

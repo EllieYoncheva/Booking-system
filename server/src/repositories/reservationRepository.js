@@ -5,9 +5,10 @@ const listSelect = `
   SELECT r.*,
     c.name AS className,
     c.startsAt AS classStartsAt,
-    c.endsAt AS classEndsAt,
+    DATE_ADD(c.startsAt, INTERVAL s.duration MINUTE) AS classEndsAt,
     st.name AS studioName,
-    s.name AS serviceName
+    s.name AS serviceName,
+    s.duration AS serviceDuration
   FROM \`Reservations\` r
   INNER JOIN \`Classes\` c ON c.id = r.classId
   INNER JOIN \`Studios\` st ON st.id = c.studioId AND st.deletedAt IS NULL
@@ -18,9 +19,10 @@ const adminListSelect = `
   SELECT r.*,
     c.name AS className,
     c.startsAt AS classStartsAt,
-    c.endsAt AS classEndsAt,
+    DATE_ADD(c.startsAt, INTERVAL s.duration MINUTE) AS classEndsAt,
     st.name AS studioName,
     s.name AS serviceName,
+    s.duration AS serviceDuration,
     u.firstName AS clientFirstName,
     u.lastName AS clientLastName,
     u.email AS clientEmail,

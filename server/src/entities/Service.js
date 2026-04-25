@@ -11,6 +11,7 @@ export const serviceColumns = Object.freeze({
   id: "id",
   name: "name",
   description: "description",
+  duration: "duration",
   createdAt: "createdAt",
   updatedAt: "updatedAt",
   deletedAt: "deletedAt",

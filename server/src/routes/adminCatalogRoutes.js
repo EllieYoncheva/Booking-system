@@ -6,6 +6,7 @@ import * as studioRepository from "../repositories/studioRepository.js";
 import * as serviceRepository from "../repositories/serviceRepository.js";
 import * as instructorRepository from "../repositories/instructorRepository.js";
 import * as classRepository from "../repositories/classRepository.js";
+import * as scheduleRepository from "../repositories/scheduleRepository.js";
 
 const router = Router();
 
@@ -86,9 +87,14 @@ router.post("/services", async (req, res, next) => {
     if (typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ error: "name is required" });
     }
+    const duration = Number(req.body.duration);
+    if (!Number.isInteger(duration) || duration < 1) {
+      return res.status(400).json({ error: "duration must be a positive integer" });
+    }
     const id = await serviceRepository.insertService({
       name: name.trim().slice(0, 160),
       description: req.body.description,
+      duration,
     });
     res.status(201).json({ id });
   } catch (e) {
@@ -105,7 +111,17 @@ router.patch("/services/:id", async (req, res, next) => {
     const patch = {};
     if (req.body.name !== undefined) patch.name = String(req.body.name).trim().slice(0, 160);
     if (req.body.description !== undefined) patch.description = req.body.description;
+    if (req.body.duration !== undefined) {
+      const duration = Number(req.body.duration);
+      if (!Number.isInteger(duration) || duration < 1) {
+        return res.status(400).json({ error: "duration must be a positive integer" });
+      }
+      patch.duration = duration;
+    }
     await serviceRepository.updateService(id, patch);
+    if (patch.duration !== undefined) {
+      await classRepository.refreshEndsAtForService(id);
+    }
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -186,6 +202,22 @@ router.get("/classes", async (_req, res, next) => {
   }
 });
 
+function addMinutes(value, minutes) {
+  const start = new Date(value);
+  const delta = Number(minutes);
+  if (Number.isNaN(start.getTime())) {
+    throw new Error("INVALID_STARTS_AT");
+  }
+  if (!Number.isFinite(delta) || delta < 1) {
+    throw new Error("INVALID_DURATION");
+  }
+  const end = new Date(start.getTime() + delta * 60 * 1000);
+  if (Number.isNaN(end.getTime())) {
+    throw new Error("INVALID_ENDS_AT");
+  }
+  return end.toISOString();
+}
+
 function parseClassBody(body, partial) {
   const out = {};
   if (!partial || body.name !== undefined) out.name = body.name == null ? null : String(body.name).slice(0, 160);
@@ -195,10 +227,6 @@ function parseClassBody(body, partial) {
   if (!partial || body.startsAt !== undefined) {
     if (typeof body.startsAt !== "string" || !body.startsAt.trim()) return { error: "startsAt is required (ISO string)" };
     out.startsAt = body.startsAt.trim();
-  }
-  if (!partial || body.endsAt !== undefined) {
-    if (typeof body.endsAt !== "string" || !body.endsAt.trim()) return { error: "endsAt is required (ISO string)" };
-    out.endsAt = body.endsAt.trim();
   }
   if (!partial || body.price !== undefined) {
     out.price = body.price == null || body.price === "" ? null : Number(body.price);
@@ -238,9 +266,8 @@ router.post("/classes", async (req, res, next) => {
     if (parsed.error) return res.status(400).json({ error: parsed.error });
     const v = parsed.value;
     const starts = new Date(v.startsAt);
-    const ends = new Date(v.endsAt);
-    if (Number.isNaN(starts.getTime()) || Number.isNaN(ends.getTime()) || ends <= starts) {
-      return res.status(400).json({ error: "endsAt must be after startsAt" });
+    if (Number.isNaN(starts.getTime())) {
+      return res.status(400).json({ error: "Invalid startsAt" });
     }
     const svc = await serviceRepository.findServiceById(v.serviceId);
     const stu = await studioRepository.findStudioById(v.studioId);
@@ -248,11 +275,21 @@ router.post("/classes", async (req, res, next) => {
     if (!svc || !stu || !ins) {
       return res.status(400).json({ error: "Invalid serviceId, studioId, or instructorId" });
     }
+    const durationMin = Number(svc.duration);
+    if (!Number.isInteger(durationMin) || durationMin < 1) {
+      return res.status(400).json({ error: "Service duration is invalid; set duration on the service" });
+    }
+    let endsAt;
+    try {
+      endsAt = addMinutes(v.startsAt, durationMin);
+    } catch {
+      return res.status(400).json({ error: "Invalid startsAt or duration" });
+    }
     const id = await classRepository.insertClass({
       name: v.name,
       description: v.description,
       startsAt: v.startsAt,
-      endsAt: v.endsAt,
+      endsAt,
       price: v.price,
       capacity: v.capacity,
       serviceId: v.serviceId,
@@ -281,15 +318,22 @@ router.patch("/classes/:id", async (req, res, next) => {
     }
     if (Object.keys(patch).length === 0) return res.json({ ok: true });
     const startsAt = patch.startsAt !== undefined ? patch.startsAt : existing.startsAt;
-    const endsAt = patch.endsAt !== undefined ? patch.endsAt : existing.endsAt;
     const s = new Date(startsAt);
-    const e = new Date(endsAt);
-    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e <= s) {
-      return res.status(400).json({ error: "endsAt must be after startsAt" });
+    if (Number.isNaN(s.getTime())) {
+      return res.status(400).json({ error: "Invalid startsAt" });
     }
+    let duration = Number(existing.serviceDuration);
     if (patch.serviceId != null) {
       const svc = await serviceRepository.findServiceById(patch.serviceId);
       if (!svc) return res.status(400).json({ error: "Invalid serviceId" });
+      duration = Number(svc.duration);
+    } else if (!Number.isFinite(duration) || duration < 1) {
+      const svc = await serviceRepository.findServiceById(existing.serviceId);
+      if (!svc) return res.status(400).json({ error: "Service not found for class" });
+      duration = Number(svc.duration);
+    }
+    if (!Number.isInteger(duration) || duration < 1) {
+      return res.status(400).json({ error: "Service duration is invalid; set duration on the service" });
     }
     if (patch.studioId != null) {
       const stu = await studioRepository.findStudioById(patch.studioId);
@@ -298,6 +342,11 @@ router.patch("/classes/:id", async (req, res, next) => {
     if (patch.instructorId != null) {
       const ins = await instructorRepository.findInstructorById(patch.instructorId);
       if (!ins) return res.status(400).json({ error: "Invalid instructorId" });
+    }
+    try {
+      patch.endsAt = addMinutes(startsAt, duration);
+    } catch {
+      return res.status(400).json({ error: "Invalid startsAt or duration" });
     }
     await classRepository.updateClass(id, patch);
     res.json({ ok: true });
@@ -327,6 +376,123 @@ router.delete("/classes/:id", async (req, res, next) => {
     } finally {
       conn.release();
     }
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.get("/schedules", async (_req, res, next) => {
+  try {
+    res.json({ schedules: await scheduleRepository.listSchedules() });
+  } catch (e) {
+    next(e);
+  }
+});
+
+function parseScheduleBody(body, partial) {
+  const out = {};
+  if (!partial || body.classId !== undefined) {
+    const classId = Number(body.classId);
+    if (!Number.isInteger(classId) || classId < 1) return { error: "classId is required" };
+    out.classId = classId;
+  }
+  if (!partial || body.recurrenceRule !== undefined) {
+    if (typeof body.recurrenceRule !== "string" || !body.recurrenceRule.trim()) {
+      return { error: "recurrenceRule is required" };
+    }
+    const recurrenceRule = body.recurrenceRule.trim().slice(0, 255);
+    const lower = recurrenceRule.toLowerCase();
+    const supported =
+      ["daily", "weekly", "monthly"].includes(lower) ||
+      lower.includes("freq=daily") ||
+      lower.includes("freq=weekly") ||
+      lower.includes("freq=monthly");
+    if (!supported) return { error: "recurrenceRule must be daily, weekly, monthly, or an iCal FREQ rule" };
+    out.recurrenceRule = recurrenceRule;
+  }
+  if (!partial || body.startDate !== undefined) {
+    if (typeof body.startDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(body.startDate)) {
+      return { error: "startDate is required as YYYY-MM-DD" };
+    }
+    out.startDate = body.startDate;
+  }
+  if (!partial || body.endDate !== undefined) {
+    if (body.endDate == null || body.endDate === "") {
+      out.endDate = null;
+    } else if (typeof body.endDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.endDate)) {
+      out.endDate = body.endDate;
+    } else {
+      return { error: "endDate must be YYYY-MM-DD" };
+    }
+  }
+  if (!partial || body.daysOfWeek !== undefined) {
+    const days = Array.isArray(body.daysOfWeek) ? body.daysOfWeek.map(Number) : [];
+    if (!days.every((n) => Number.isInteger(n) && n >= 0 && n <= 6)) {
+      return { error: "daysOfWeek must contain numbers from 0 to 6" };
+    }
+    out.daysOfWeek = [...new Set(days)].sort((a, b) => a - b);
+  }
+  if (!partial || body.startTime !== undefined) {
+    if (typeof body.startTime !== "string" || !/^\d{2}:\d{2}$/.test(body.startTime)) {
+      return { error: "startTime is required as HH:mm" };
+    }
+    out.startTime = body.startTime;
+  }
+  return { value: out };
+}
+
+router.post("/schedules", async (req, res, next) => {
+  try {
+    const parsed = parseScheduleBody(req.body ?? {}, false);
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
+    const v = parsed.value;
+    const existing = await classRepository.findClassById(v.classId);
+    if (!existing) return res.status(400).json({ error: "Invalid classId" });
+    const id = await scheduleRepository.insertSchedule(v);
+    const generation = await scheduleRepository.generateScheduleInstances(id);
+    res.status(201).json({ id, generated: generation?.generated ?? 0, skipped: generation?.skipped ?? 0 });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.patch("/schedules/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
+    const existing = await scheduleRepository.findScheduleById(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const parsed = parseScheduleBody(req.body ?? {}, true);
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
+    if (parsed.value.classId != null && !(await classRepository.findClassById(parsed.value.classId))) {
+      return res.status(400).json({ error: "Invalid classId" });
+    }
+    await scheduleRepository.updateSchedule(id, parsed.value);
+    const generation = await scheduleRepository.generateScheduleInstances(id);
+    res.json({ ok: true, generated: generation?.generated ?? 0, skipped: generation?.skipped ?? 0 });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/schedules/:id/generate", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
+    const generation = await scheduleRepository.generateScheduleInstances(id);
+    if (!generation) return res.status(404).json({ error: "Not found" });
+    res.json({ generated: generation.generated, skipped: generation.skipped });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.delete("/schedules/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
+    await scheduleRepository.deleteSchedule(id);
     res.json({ ok: true });
   } catch (e) {
     next(e);

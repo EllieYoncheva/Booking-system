@@ -4,6 +4,11 @@ import * as studioRepository from "../repositories/studioRepository.js";
 import * as instructorRepository from "../repositories/instructorRepository.js";
 import { AppError, assertFound } from "../errors/AppError.js";
 
+function addMinutes(value, minutes) {
+  const start = new Date(value);
+  return new Date(start.getTime() + minutes * 60 * 1000);
+}
+
 /**
  * @param {{ from?: Date, to?: Date }} range
  * @param {{ defaultFromNow?: boolean }} [opts]
@@ -18,15 +23,12 @@ export async function listClasses(range, opts = {}) {
  * @param {Omit<import("../entities/types.js").ScheduledClass, "id"|"cancellationReason"> & { cancellationReason?: string | null }} body
  */
 export async function createClass(body) {
-  await assertFkTargets(body);
-  if (body.endsAt <= body.startsAt) {
-    throw new AppError("endsAt must be after startsAt", 400, "INVALID_CLASS_TIME");
-  }
+  const { service } = await assertFkTargets(body);
   return classRepository.insertClass({
     name: body.name ?? null,
     description: body.description ?? null,
     startsAt: body.startsAt,
-    endsAt: body.endsAt,
+    endsAt: addMinutes(body.startsAt, Number(service.duration)),
     price: body.price ?? null,
     capacity: body.capacity,
     serviceId: body.serviceId,
@@ -51,7 +53,6 @@ export async function updateClass(id, patch) {
     name: patch.name !== undefined ? patch.name : existing.name,
     description: patch.description !== undefined ? patch.description : existing.description,
     startsAt: patch.startsAt !== undefined ? patch.startsAt : existing.startsAt,
-    endsAt: patch.endsAt !== undefined ? patch.endsAt : existing.endsAt,
     price: patch.price !== undefined ? patch.price : existing.price,
     capacity: patch.capacity !== undefined ? patch.capacity : existing.capacity,
     serviceId: patch.serviceId !== undefined ? patch.serviceId : existing.serviceId,
@@ -66,20 +67,15 @@ export async function updateClass(id, patch) {
     studioId: next.studioId,
     instructorId: next.instructorId,
     startsAt: next.startsAt,
-    endsAt: next.endsAt,
     capacity: next.capacity,
   };
-  await assertFkTargets(body);
-
-  if (new Date(next.endsAt) <= new Date(next.startsAt)) {
-    throw new AppError("endsAt must be after startsAt", 400, "INVALID_CLASS_TIME");
-  }
+  const { service } = await assertFkTargets(body);
 
   return classRepository.updateClass(id, {
     name: next.name,
     description: next.description,
     startsAt: next.startsAt,
-    endsAt: next.endsAt,
+    endsAt: addMinutes(next.startsAt, Number(service.duration)),
     price: next.price,
     capacity: next.capacity,
     serviceId: next.serviceId,
@@ -102,19 +98,20 @@ export async function deleteClass(id) {
 
 /** @param {{ serviceId: number, studioId: number, instructorId: number }} body */
 async function assertFkTargets(body) {
-  assertFound(
+  const service = assertFound(
     await serviceOfferingRepository.findServiceOfferingById(body.serviceId),
     "Service not found",
     "SERVICE_NOT_FOUND"
   );
-  assertFound(
+  const studio = assertFound(
     await studioRepository.findStudioById(body.studioId),
     "Studio not found",
     "STUDIO_NOT_FOUND"
   );
-  assertFound(
+  const instructor = assertFound(
     await instructorRepository.findInstructorById(body.instructorId),
     "Instructor not found",
     "INSTRUCTOR_NOT_FOUND"
   );
+  return { service, studio, instructor };
 }

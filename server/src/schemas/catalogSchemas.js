@@ -19,6 +19,7 @@ export const createServiceOfferingBodySchema = z
   .object({
     name: z.string().min(1).max(160),
     description: z.string().max(500).nullable().optional(),
+    duration: z.coerce.number().int().positive(),
   })
   .strict();
 

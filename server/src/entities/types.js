@@ -57,6 +57,7 @@
  * @property {number} id
  * @property {string} name
  * @property {string|null} description
+ * @property {number} duration duration in minutes
  * @property {Date|string} createdAt
  * @property {Date|string} updatedAt
  * @property {Date|string|null} deletedAt
@@ -87,7 +88,20 @@
  * @property {number} serviceId
  * @property {number} studioId
  * @property {number} instructorId
+ * @property {number|null} scheduleId
  * @property {string|null} cancellationReason
+ */
+
+/**
+ * Recurring schedule that generates concrete Classes from a template class.
+ * @typedef {Object} Schedule
+ * @property {number} id
+ * @property {number} classId
+ * @property {string} recurrenceRule
+ * @property {string|Date} startDate
+ * @property {string|Date|null} endDate
+ * @property {number[]|string|null} daysOfWeek
+ * @property {string} startTime
  */
 
 /**

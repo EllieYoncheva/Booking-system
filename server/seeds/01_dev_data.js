@@ -23,6 +23,7 @@ export async function seed(knex) {
   const [serviceId] = await knex("Services").insert({
     name: "Reformer Group",
     description: "55-minute reformer class",
+    duration: 55,
   });
 
   const [instructorId] = await knex("Instructors").insert({
@@ -62,7 +63,7 @@ export async function seed(knex) {
       name: "Weekend Flow",
       description: "Beginner friendly",
       startsAt: day(5),
-      endsAt: new Date(day(5).getTime() + 60 * 60 * 1000),
+      endsAt: new Date(day(5).getTime() + 55 * 60 * 1000),
       price: 40.0,
       capacity: 10,
       serviceId,

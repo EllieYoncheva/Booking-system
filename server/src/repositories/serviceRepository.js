@@ -23,8 +23,8 @@ export async function insertService(row) {
   const pool = getPool();
   if (!pool) throw new Error("Database not configured");
   const [result] = await pool.query(
-    "INSERT INTO `Services` (`name`, `description`) VALUES (?, ?)",
-    [row.name, row.description ?? null]
+    "INSERT INTO `Services` (`name`, `description`, `duration`) VALUES (?, ?, ?)",
+    [row.name, row.description ?? null, row.duration]
   );
   return result.insertId;
 }
@@ -32,7 +32,7 @@ export async function insertService(row) {
 export async function updateService(id, patch) {
   const pool = getPool();
   if (!pool) throw new Error("Database not configured");
-  const allowed = ["name", "description"];
+  const allowed = ["name", "description", "duration"];
   const keys = allowed.filter((k) => patch[k] !== undefined);
   if (keys.length === 0) return;
   const set = keys.map((k) => `\`${k}\` = ?`).join(", ");

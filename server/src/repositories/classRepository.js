@@ -1,9 +1,25 @@
 import { getPool } from "../db/pool.js";
 import { toMysqlDateTime } from "../utils/mysqlDateTime.js";
 
+const classColumns = `
+    c.id,
+    c.name,
+    c.description,
+    c.startsAt,
+    DATE_ADD(c.startsAt, INTERVAL s.duration MINUTE) AS endsAt,
+    c.price,
+    c.capacity,
+    c.serviceId,
+    c.studioId,
+    c.instructorId,
+    c.scheduleId,
+    c.cancellationReason
+`;
+
 const classSelectJoins = `
-  SELECT c.*,
+  SELECT ${classColumns},
     s.name AS serviceName,
+    s.duration AS serviceDuration,
     st.name AS studioName,
     i.firstName AS instructorFirstName,
     i.lastName AS instructorLastName
@@ -40,8 +56,9 @@ export async function listPublicClassesWithSpots(range = {}) {
   }
   const where = conditions.join(" AND ");
   const [rows] = await pool.query(
-    `SELECT c.*,
+    `SELECT ${classColumns},
       s.name AS serviceName,
+      s.duration AS serviceDuration,
       st.name AS studioName,
       i.firstName AS instructorFirstName,
       i.lastName AS instructorLastName,
@@ -55,6 +72,24 @@ export async function listPublicClassesWithSpots(range = {}) {
     ORDER BY c.startsAt ASC`,
     params
   );
+  return rows;
+}
+
+export async function listClasses(range = {}) {
+  const pool = getPool();
+  if (!pool) return [];
+  const conditions = [];
+  const params = [];
+  if (range.from) {
+    conditions.push("c.`startsAt` >= ?");
+    params.push(range.from);
+  }
+  if (range.to) {
+    conditions.push("c.`startsAt` <= ?");
+    params.push(range.to);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const [rows] = await pool.query(`${classSelectJoins} ${where} ORDER BY c.startsAt ASC`, params);
   return rows;
 }
 
@@ -78,8 +113,8 @@ export async function insertClass(row) {
   const pool = getPool();
   if (!pool) throw new Error("Database not configured");
   const [result] = await pool.query(
-    `INSERT INTO \`Classes\` (\`name\`, \`description\`, \`startsAt\`, \`endsAt\`, \`price\`, \`capacity\`, \`serviceId\`, \`studioId\`, \`instructorId\`, \`cancellationReason\`)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO \`Classes\` (\`name\`, \`description\`, \`startsAt\`, \`endsAt\`, \`price\`, \`capacity\`, \`serviceId\`, \`studioId\`, \`instructorId\`, \`scheduleId\`, \`cancellationReason\`)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       row.name ?? null,
       row.description ?? null,
@@ -90,6 +125,7 @@ export async function insertClass(row) {
       row.serviceId,
       row.studioId,
       row.instructorId,
+      row.scheduleId ?? null,
       row.cancellationReason ?? null,
     ]
   );
@@ -109,6 +145,7 @@ export async function updateClass(id, patch) {
     "serviceId",
     "studioId",
     "instructorId",
+    "scheduleId",
     "cancellationReason",
   ];
   const keys = allowed.filter((k) => patch[k] !== undefined);
@@ -119,6 +156,18 @@ export async function updateClass(id, patch) {
   );
   values.push(id);
   await pool.query(`UPDATE \`Classes\` SET ${set} WHERE \`id\` = ?`, values);
+}
+
+export async function refreshEndsAtForService(serviceId) {
+  const pool = getPool();
+  if (!pool) throw new Error("Database not configured");
+  await pool.query(
+    `UPDATE \`Classes\` c
+     INNER JOIN \`Services\` s ON s.id = c.serviceId
+     SET c.\`endsAt\` = DATE_ADD(c.\`startsAt\`, INTERVAL s.\`duration\` MINUTE)
+     WHERE c.\`serviceId\` = ?`,
+    [serviceId]
+  );
 }
 
 /**
