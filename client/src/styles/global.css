@@ -1,24 +1,5 @@
 :root {
-  color-scheme: light dark;
-  --bg: #0f1419;
-  --surface: #1a2332;
-  --border: #2d3a4d;
-  --text: #e7ecf3;
-  --muted: #8b9cb3;
-  --accent: #5b9fd4;
-  --danger: #e85d5d;
-  --ok: #6bc96b;
-  --schedule-canvas: color-mix(in srgb, var(--bg) 92%, #8b7355 8%);
-  --schedule-card: var(--surface);
-  --schedule-line-warm: #e8a84a;
-  --schedule-line-cool: #c76b7a;
-  --schedule-dot: color-mix(in srgb, var(--text) 8%, transparent);
-  font-family: system-ui, "Segoe UI", sans-serif;
-  line-height: 1.45;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
+  color-scheme: light ;
     --bg: #f4f6f9;
     --surface: #fff;
     --border: #d0d7e2;
@@ -32,6 +13,28 @@
     --schedule-line-warm: #f0b04a;
     --schedule-line-cool: #d48492;
     --schedule-dot: color-mix(in srgb, var(--text) 6%, transparent);
+    font-family: system-ui, "Segoe UI", sans-serif;
+    line-height: 1.45;
+  
+}
+
+@media (prefers-color-scheme: light dark) {
+  :root {
+    --bg: #0f1419;
+    --surface: #1a2332;
+    --border: #2d3a4d;
+    --text: #e7ecf3;
+    --muted: #8b9cb3;
+    --accent: #5b9fd4;
+    --danger: #e85d5d;
+    --ok: #6bc96b;
+    --schedule-canvas: color-mix(in srgb, var(--bg) 92%, #8b7355 8%);
+    --schedule-card: var(--surface);
+    --schedule-line-warm: #e8a84a;
+    --schedule-line-cool: #c76b7a;
+    --schedule-dot: color-mix(in srgb, var(--text) 8%, transparent);
+    font-family: system-ui, "Segoe UI", sans-serif;
+    line-height: 1.45;
   }
 }
 
@@ -201,6 +204,38 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.btn-group {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.btn-group button {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  background: var(--surface);
+}
+
+.btn-group button:last-child {
+  border-right: none;
+}
+
+.btn-group button:hover {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.btn-group button.is-active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  color: var(--text);
+}
+
 .muted {
   color: var(--muted);
   font-size: 0.875rem;
@@ -216,6 +251,18 @@ button:disabled {
 
 .ok {
   color: var(--ok);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .small {
@@ -290,13 +337,7 @@ button:disabled {
   height: 3px;
   border-radius: 2px;
   margin-bottom: 1rem;
-  background: linear-gradient(
-    90deg,
-    var(--schedule-line-warm) 0%,
-    var(--schedule-line-warm) 22%,
-    var(--schedule-line-cool) 22%,
-    color-mix(in srgb, var(--schedule-line-cool) 75%, var(--text) 25%) 100%
-  );
+  background: var(--schedule-line-warm)
 }
 
 .schedule-card-list {
@@ -346,7 +387,7 @@ button:disabled {
 .schedule-card-main {
   flex: 1;
   min-width: 0;
-  padding: 0.85rem 1rem;
+  padding: 0.50rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -378,12 +419,6 @@ button:disabled {
   font-size: 0.82rem;
   color: var(--muted);
   line-height: 1.35;
-}
-
-.schedule-card-studio {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-top: 0.15rem;
 }
 
 .schedule-card-actions {

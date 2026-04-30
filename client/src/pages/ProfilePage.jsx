@@ -64,7 +64,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="page">
+    <main className="page">
       <h2>Моят профил</h2>
       {error && <div className="error-banner">{error}</div>}
       {ok && (
@@ -112,6 +112,6 @@ export default function ProfilePage() {
           </div>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

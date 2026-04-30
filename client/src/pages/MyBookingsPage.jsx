@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
 import { RESERVATION_STATUS_BG } from "../utils/reservationStatusBg.js";
 
@@ -71,24 +71,47 @@ function ReservationTable({ rows, cancelling, canCancel, cancel }) {
 }
 
 export default function MyBookingsPage() {
-  const { getToken } = useOutletContext();
+  const { authenticated, getToken, keycloak } = useOutletContext();
+  const [searchParams] = useSearchParams();
+  const selectedClassId = searchParams.get("classId");
   const [rows, setRows] = useState([]);
+  const [selectedClass, setSelectedClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(null);
+  const [booking, setBooking] = useState(false);
+  const [reservationListTab, setReservationListTab] = useState("upcoming");
 
   const load = () => {
     setLoading(true);
     setError("");
-    apiRequest(getToken, "/api/me/reservations")
-      .then((j) => setRows(j.reservations ?? []))
+    const requests = [];
+
+    if (authenticated) {
+      requests.push(apiRequest(getToken, "/api/me/reservations").then((j) => setRows(j.reservations ?? [])));
+    } else {
+      setRows([]);
+    }
+
+    if (selectedClassId) {
+      requests.push(
+        apiRequest(getToken, "/api/classes").then((j) => {
+          const found = (j.classes ?? []).find((c) => String(c.id) === String(selectedClassId));
+          setSelectedClass(found ?? null);
+        })
+      );
+    } else {
+      setSelectedClass(null);
+    }
+
+    Promise.all(requests)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     load();
-  }, [getToken]);
+  }, [authenticated, getToken, selectedClassId]);
 
   const canCancel = (s) => s === "pending" || s === "confirmed";
 
@@ -109,6 +132,10 @@ export default function MyBookingsPage() {
   }, [rows]);
 
   const cancel = (id) => {
+    if (!authenticated) {
+      keycloak.login({ redirectUri: window.location.href });
+      return;
+    }
     setCancelling(id);
     setError("");
     apiRequest(getToken, `/api/reservations/${id}/cancel`, { method: "PATCH" })
@@ -117,24 +144,99 @@ export default function MyBookingsPage() {
       .finally(() => setCancelling(null));
   };
 
+  const login = () => keycloak.login({ redirectUri: window.location.href });
+
+  const reserveSelectedClass = () => {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    if (!selectedClass) return;
+    setBooking(true);
+    setError("");
+    apiRequest(getToken, `/api/classes/${selectedClass.id}/reservations`, { method: "POST" })
+      .then(() => {
+        window.alert("Резервацията е създадена успешно.");
+        return load();
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setBooking(false));
+  };
+
   return (
     <main className="page">
-      <h2>Мои резервации</h2>
+      <h2>Резервации</h2>
       {error && <div className="error-banner">{error}</div>}
       {loading ? (
         <p>Зареждане…</p>
-      ) : rows.length === 0 ? (
-        <p className="muted">Нямате резервации.</p>
       ) : (
         <>
-          <section>
-            <h3>Предстоящи</h3>
-            <ReservationTable rows={upcoming} cancelling={cancelling} canCancel={canCancel} cancel={cancel} />
-          </section>
-          <section>
-            <h3>Минали</h3>
-            <ReservationTable rows={past} cancelling={cancelling} canCancel={canCancel} cancel={cancel} />
-          </section>
+          {authenticated && (
+            <div className="btn-group" role="group" aria-label="Филтър на резервации">
+              <button
+                type="button"
+                className={reservationListTab === "upcoming" ? "is-active" : ""}
+                onClick={() => setReservationListTab("upcoming")}
+              >
+                Предстоящи
+              </button>
+              <button
+                type="button"
+                className={reservationListTab === "past" ? "is-active" : ""}
+                onClick={() => setReservationListTab("past")}
+              >
+                Минали
+              </button>
+            </div>
+          )}
+
+          {selectedClassId && (
+            <section className="panel">
+              <h3>Избран час</h3>
+              {selectedClass ? (
+                <>
+                  <p>
+                    <strong>{selectedClass.name || selectedClass.serviceName || "Клас"}</strong>
+                    <br />
+                    {formatWhen(selectedClass.startsAt)} – {formatWhen(selectedClass.endsAt)}
+                    {selectedClass.studioName ? `, ${selectedClass.studioName}` : ""}
+                  </p>
+                  <button
+                    type="button"
+                    className="primary"
+                    disabled={booking || Number(selectedClass.spotsLeft) < 1}
+                    onClick={reserveSelectedClass}
+                  >
+                    {booking ? "…" : authenticated ? "Потвърди резервация" : "Вход за резервация"}
+                  </button>
+                </>
+              ) : (
+                <p className="muted">Избраният час не е намерен или вече не е наличен.</p>
+              )}
+            </section>
+          )}
+
+          {!authenticated ? (
+            <section className="panel">
+              <h3>Моите резервации</h3>
+              <p className="muted">Влезте в профила си, за да видите или управлявате своите резервации.</p>
+              <button type="button" onClick={login}>
+                Вход
+              </button>
+            </section>
+          ) : (
+            <section aria-labelledby="reservations-tab-heading">
+              <h3 id="reservations-tab-heading" className="visually-hidden">
+                {reservationListTab === "upcoming" ? "Предстоящи резервации" : "Минали резервации"}
+              </h3>
+              <ReservationTable
+                rows={reservationListTab === "upcoming" ? upcoming : past}
+                cancelling={cancelling}
+                canCancel={canCancel}
+                cancel={cancel}
+              />
+            </section>
+          )}
         </>
       )}
     </main>

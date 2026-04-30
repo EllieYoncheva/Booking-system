@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
 
 /** @param {string} iso */
@@ -53,11 +53,11 @@ function groupClassesByDate(classes) {
 }
 
 export default function SchedulePage() {
-  const { getToken } = useOutletContext();
+  const { authenticated, getToken, keycloak } = useOutletContext();
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bookingId, setBookingId] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -75,15 +75,13 @@ export default function SchedulePage() {
   const byDate = useMemo(() => groupClassesByDate(classes), [classes]);
 
   const book = (classId) => {
-    setBookingId(classId);
-    setError("");
-    apiRequest(getToken, `/api/classes/${classId}/reservations`, { method: "POST" })
-      .then(() => {
-        window.alert("Резервацията е създадена успешно.");
-        return load();
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setBookingId(null));
+    if (!authenticated) {
+      keycloak.login({
+        redirectUri: `${window.location.origin}/bookings?classId=${classId}`,
+      });
+      return;
+    }
+    navigate(`/bookings?classId=${classId}`);
   };
 
   return (
@@ -108,7 +106,6 @@ export default function SchedulePage() {
               <ul className="schedule-card-list">
                 {dayClasses.map((c) => {
                   const spots = Number(c.spotsLeft);
-                  const busy = bookingId === c.id;
                   const mins = Number(c.serviceDuration);
                   const title =
                     typeof c.name === "string" && c.name.trim() ? c.name.trim() : String(c.serviceName ?? "Клас");
@@ -139,18 +136,16 @@ export default function SchedulePage() {
                         <div className="schedule-card-text">
                           <span className="schedule-card-title">{title}</span>
                           <span className="schedule-card-sub">{subline}</span>
-                          {c.studioName ? (
-                            <span className="schedule-card-studio">{String(c.studioName)}</span>
-                          ) : null}
+                          
                         </div>
                         <div className="schedule-card-actions">
                           <button
                             type="button"
                             className="primary"
-                            disabled={!Number.isFinite(spots) || spots < 1 || busy}
+                            disabled={!Number.isFinite(spots) || spots < 1}
                             onClick={() => book(c.id)}
                           >
-                            {busy ? "…" : "Резервирай"}
+                            Запази час
                           </button>
                         
                         </div>

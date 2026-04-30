@@ -3,7 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../context/KeycloakContext.jsx";
 
 export default function Layout() {
-  const { keycloak, hasRole, getToken } = useAuth();
+  const { keycloak, authenticated, hasRole, getToken } = useAuth();
   const [dbOk, setDbOk] = useState(null);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function Layout() {
   }, []);
 
   const userLabel =
-    keycloak.tokenParsed?.preferred_username ?? keycloak.subject ?? "—";
+    authenticated ? keycloak.tokenParsed?.preferred_username ?? keycloak.subject ?? "—" : "Гост";
 
   return (
     <div className="app-shell">
@@ -32,10 +32,12 @@ export default function Layout() {
           <NavLink to="/schedule" className={({ isActive }) => (isActive ? "active" : "")}>
             График
           </NavLink>
-          <NavLink to="/bookings" className={({ isActive }) => (isActive ? "active" : "")}>
-            Мои резервации
-          </NavLink>
-          {hasRole("admin") && (
+          {authenticated && (
+            <NavLink to="/bookings" className={({ isActive }) => (isActive ? "active" : "")}>
+              Мои резервации
+            </NavLink>
+          )}
+          {authenticated && hasRole("admin") && (
             <NavLink to="/admin/studios" className={({ isActive }) => (isActive ? "active" : "")}>
               Админ
             </NavLink>
@@ -46,18 +48,29 @@ export default function Layout() {
             База:{" "}
             {dbOk === null ? "…" : dbOk ? <span className="ok">свързана</span> : "няма връзка"}
           </span>
-          <NavLink
-            to="/profile"
-            className={({ isActive }) => `app-meta-user${isActive ? " is-active" : ""}`}
-          >
-            {userLabel}
-          </NavLink>
-          <button type="button" onClick={() => keycloak.logout()}>
-            Изход
-          </button>
+          {authenticated ? (
+            <>
+              <NavLink
+                to="/profile"
+                className={({ isActive }) => `app-meta-user${isActive ? " is-active" : ""}`}
+              >
+                {userLabel}
+              </NavLink>
+              <button type="button" onClick={() => keycloak.logout()}>
+                Изход
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="app-meta-user">{userLabel}</span>
+              <button type="button" onClick={() => keycloak.login()}>
+                Вход
+              </button>
+            </>
+          )}
         </div>
       </header>
-      <Outlet context={{ getToken }} />
+      <Outlet context={{ authenticated, getToken, keycloak }} />
     </div>
   );
 }

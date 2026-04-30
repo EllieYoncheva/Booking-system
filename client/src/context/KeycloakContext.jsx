@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     let cancelled = false;
 
     initKeycloakOnce({
-      onLoad: "login-required",
+      onLoad: "check-sso",
       checkLoginIframe: false,
       pkceMethod: "S256",
     })
@@ -29,9 +29,14 @@ export const AuthProvider = ({ children }) => {
         const extractedRoles = keycloak.tokenParsed?.realm_access?.roles ?? [];
         setUserRoles(extractedRoles);
 
-        refreshTimer.current = setInterval(() => {
-          keycloak.updateToken(70).catch(() => keycloak.login());
-        }, 60000);
+        if (auth) {
+          refreshTimer.current = setInterval(() => {
+            keycloak.updateToken(70).catch(() => {
+              setAuthenticated(false);
+              setUserRoles([]);
+            });
+          }, 60000);
+        }
 
         setKeycloakReady(true);
       })
@@ -59,8 +64,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getToken = useCallback(async () => {
-    await keycloak.updateToken(30);
-    return keycloak.token;
+    if (!keycloak.authenticated) return undefined;
+    try {
+      await keycloak.updateToken(30);
+      return keycloak.token;
+    } catch {
+      setAuthenticated(false);
+      setUserRoles([]);
+      return undefined;
+    }
   }, []);
 
   if (!keycloakReady) {

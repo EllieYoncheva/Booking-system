@@ -7,9 +7,6 @@ import * as appSettingsService from "../services/appSettingsService.js";
 
 const router = Router();
 
-router.use(verifyKeycloakJwt(true));
-router.use(attachAppUser());
-
 router.get("/classes", async (req, res, next) => {
   try {
     const { from, to } = req.query;
@@ -22,6 +19,9 @@ router.get("/classes", async (req, res, next) => {
     next(err);
   }
 });
+
+router.use(verifyKeycloakJwt(true));
+router.use(attachAppUser());
 
 router.get("/me/reservations", async (req, res, next) => {
   try {
