@@ -15,6 +15,7 @@ import adminOperationsRoutes from "./routes/adminOperationsRoutes.js";
 import { ensureAppUser } from "./services/userSyncService.js";
 import * as userService from "./services/userService.js";
 import { AppError } from "./errors/AppError.js";
+import * as waitlistRepository from "./repositories/waitlistRepository.js";
 
 function userForApiResponse(user) {
   if (!user) return user;
@@ -114,8 +115,13 @@ async function createApp() {
   }
 
   app.use((err, _req, res, _next) => {
+    if (err instanceof AppError) {
+      return res.status(err.statusCode).json({ error: err.message, code: err.code });
+    }
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    const dev = config.nodeEnv !== "production";
+    const message = dev && err instanceof Error && err.message ? err.message : undefined;
+    res.status(500).json({ error: "Internal server error", ...(message ? { details: message } : {}) });
   });
 
   return { listenable: httpServer ?? app };
@@ -130,6 +136,13 @@ createApp()
         console.log(`Keycloak: Valid redirect URIs + Web origins → ${base}/*`);
       }
     });
+
+    const CLEANUP_MS = 15 * 60 * 1000;
+    setInterval(() => {
+      waitlistRepository.cleanupWaitlistForStartedClasses().catch((err) => {
+        console.error("waitlist cleanup", err);
+      });
+    }, CLEANUP_MS);
   })
   .catch((err) => {
     console.error(err);

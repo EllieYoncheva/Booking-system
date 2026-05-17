@@ -17,3 +17,8 @@ export async function setAutoConfirmBookings(enabled) {
 export async function getBookingSettings() {
   return { autoConfirmBookings: await getAutoConfirmBookings() };
 }
+
+/** Status for new reservations (direct book or waitlist promotion). */
+export async function getNewReservationStatus() {
+  return (await getAutoConfirmBookings()) ? "confirmed" : "pending";
+}

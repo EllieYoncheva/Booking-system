@@ -13,6 +13,8 @@
     --schedule-line-warm: #f0b04a;
     --schedule-line-cool: #d48492;
     --schedule-dot: color-mix(in srgb, var(--text) 6%, transparent);
+    --waitlist: 	#F0B04A;
+    --waitlist-hover:	#E39A2A;
     font-family: system-ui, "Segoe UI", sans-serif;
     line-height: 1.45;
   
@@ -33,6 +35,8 @@
     --schedule-line-warm: #e8a84a;
     --schedule-line-cool: #c76b7a;
     --schedule-dot: color-mix(in srgb, var(--text) 8%, transparent);
+    --waitlist: #e8a84a;
+    --waitlist-hover: #f0b04a;
     font-family: system-ui, "Segoe UI", sans-serif;
     line-height: 1.45;
   }
@@ -197,6 +201,19 @@ button.danger {
   background: var(--danger);
   color: #fff;
   border-color: transparent;
+}
+
+button.waitlist,
+.schedule-card-actions button.waitlist {
+  background: var(--waitlist, #d97706);
+  color: #fff;
+  border-color: var(--waitlist, #d97706);
+}
+
+button.waitlist:hover:not(:disabled),
+.schedule-card-actions button.waitlist:hover:not(:disabled) {
+  background: var(--waitlist-hover, #b45309);
+  border-color: var(--waitlist-hover, #b45309);
 }
 
 button:disabled {

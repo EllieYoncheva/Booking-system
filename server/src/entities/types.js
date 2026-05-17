@@ -14,7 +14,7 @@
  */
 
 /**
- * @typedef {'created'|'confirmed'|'cancelled'|'reminder'} NotificationType
+ * @typedef {'created'|'confirmed'|'cancelled'|'reminder'|'waitlist_promoted'|'admin_pending_action'|'reservation_rejected'} NotificationType
  */
 
 /**
@@ -122,6 +122,8 @@
  * @property {Date|string|null} notifiedAt
  * @property {number} userId
  * @property {number} classId
+ * @property {'waiting'|'promoted'|'removed'} [status]
+ * @property {Date|string} [createdAt]
  */
 
 /**

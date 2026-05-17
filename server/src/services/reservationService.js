@@ -1,7 +1,7 @@
 import * as reservationRepository from "../repositories/reservationRepository.js";
-import * as classRepository from "../repositories/classRepository.js";
+import { getPool } from "../db/pool.js";
 import { AppError, assertFound } from "../errors/AppError.js";
-import { isDuplicateKeyError } from "../utils/mysqlErrors.js";
+import * as bookingNotificationService from "./bookingNotificationService.js";
 
 const ACTIVE = ["pending", "confirmed"];
 
@@ -27,31 +27,33 @@ export async function listReservations(actor, filters) {
  * @param {{ appUserId: number, classId: number }} input
  */
 export async function createReservation(input) {
-  const cls = await classRepository.findClassById(input.classId);
-  assertFound(cls, "Class not found", "CLASS_NOT_FOUND");
-
-  const now = new Date();
-  if (new Date(cls.startsAt) <= now) {
-    throw new AppError("Class has already started", 400, "CLASS_ALREADY_STARTED");
-  }
-
-  const taken = await classRepository.countActiveReservationsForClass(input.classId);
-  if (taken >= cls.capacity) {
-    throw new AppError("Class is full", 409, "CLASS_FULL");
-  }
-
-  try {
-    return await reservationRepository.insertReservationWithPool({
-      userId: input.appUserId,
-      classId: input.classId,
-      status: "pending",
-    });
-  } catch (err) {
-    if (isDuplicateKeyError(err)) {
-      throw new AppError("You already have an active booking for this class", 409, "DUPLICATE_BOOKING");
+  const r = await reservationRepository.bookClassSpot(input.appUserId, input.classId);
+  if (!r.ok) {
+    const map = {
+      CLASS_NOT_FOUND: ["Class not found", 404, "CLASS_NOT_FOUND"],
+      CLASS_CANCELLED: ["Class is cancelled", 409, "CLASS_CANCELLED"],
+      CLASS_ALREADY_STARTED: ["Class has already started", 400, "CLASS_ALREADY_STARTED"],
+      ALREADY_BOOKED: ["You already have an active booking for this class", 409, "DUPLICATE_BOOKING"],
+      ALREADY_ON_WAITLIST: ["You are already on the waitlist for this class", 409, "ALREADY_ON_WAITLIST"],
+    };
+    const m = map[r.code];
+    if (m) throw new AppError(m[0], m[1], m[2]);
+    if (r.code === "CLASS_HAS_SPOTS") {
+      // defensive — book flow should not return this from join path
+      throw new AppError("Class is full", 409, "CLASS_FULL");
     }
-    throw err;
+    throw new AppError("Booking not possible", 409, "BOOKING_FAILED");
   }
+  const pool = getPool();
+  if (pool) {
+    await bookingNotificationService.notifyNewReservation(pool, {
+      userId: input.appUserId,
+      reservationId: r.reservationId,
+      classId: input.classId,
+      status: r.status,
+    });
+  }
+  return reservationRepository.findReservationById(r.reservationId);
 }
 
 /**
@@ -65,18 +67,40 @@ export async function cancelReservation(input) {
     throw new AppError("Reservation is not active", 400, "RESERVATION_NOT_ACTIVE");
   }
 
-  if (!input.actor.isAdmin && resv.userId !== input.actor.appUserId) {
+  if (!input.actor.isAdmin && Number(resv.userId) !== Number(input.actor.appUserId)) {
     throw new AppError("You cannot cancel this reservation", 403, "FORBIDDEN");
   }
 
-  const status = input.actor.isAdmin ? "cancelled_by_admin" : "cancelled_by_user";
-  const reason =
-    input.actor.isAdmin && input.reason != null && String(input.reason).trim()
-      ? String(input.reason).trim().slice(0, 500)
-      : null;
-  return reservationRepository.updateReservationStatus(resv.id, status, new Date(), {
-    adminCancelReason: input.actor.isAdmin ? reason : null,
+  const wasAwaitingAdminDecision = resv.status === "pending";
+
+  const raw = await reservationRepository.cancelActiveReservationWithPromotion(input.reservationId, {
+    userId: input.actor.isAdmin ? null : input.actor.appUserId,
+    asAdmin: input.actor.isAdmin,
+    adminReason: input.reason,
   });
+
+  if (!raw.ok) {
+    if (raw.code === "FORBIDDEN") {
+      throw new AppError("You cannot cancel this reservation", 403, "FORBIDDEN");
+    }
+    if (raw.code === "NOT_ACTIVE") {
+      throw new AppError("Reservation is not active", 400, "RESERVATION_NOT_ACTIVE");
+    }
+    assertFound(null, "Reservation not found", "RESERVATION_NOT_FOUND");
+  }
+
+  const pool = getPool();
+  if (pool) {
+    await bookingNotificationService.afterSeatFreed(pool, {
+      promoted: raw.promoted,
+      adminRejectedPendingConfirmation: Boolean(input.actor.isAdmin && wasAwaitingAdminDecision),
+      cancelledUserId: raw.cancelledUserId,
+      reservationId: input.reservationId,
+      classId: resv.classId,
+    });
+  }
+
+  return reservationRepository.findReservationById(input.reservationId);
 }
 
 /**
@@ -96,9 +120,48 @@ export async function confirmReservationAdmin(reservationId) {
   const resv = await reservationRepository.findReservationById(reservationId);
   assertFound(resv, "Reservation not found", "RESERVATION_NOT_FOUND");
   if (resv.status !== "pending") {
-    throw new AppError("Only pending reservations can be confirmed", 400, "INVALID_STATUS");
+    throw new AppError("This reservation cannot be confirmed", 400, "INVALID_STATUS");
   }
-  return reservationRepository.updateReservationStatus(reservationId, "confirmed", null, {
+  const row = await reservationRepository.updateReservationStatus(reservationId, "confirmed", null, {
     adminCancelReason: null,
   });
+  const pool = getPool();
+  if (pool) {
+    await bookingNotificationService.notifyUserReservationConfirmed(
+      pool,
+      resv.userId,
+      reservationId,
+      resv.classId
+    );
+  }
+  return row;
+}
+
+/**
+ * Client cancels their reservation (frees slot + waitlist promotion + notifications).
+ * @param {{ reservationId: number, appUserId: number }} input
+ * @returns {Promise<boolean>}
+ */
+export async function cancelReservationForClient(input) {
+  const resv = await reservationRepository.findReservationById(input.reservationId);
+  if (!resv) return false;
+  if (!ACTIVE.includes(resv.status) || Number(resv.userId) !== Number(input.appUserId)) {
+    return false;
+  }
+  const raw = await reservationRepository.cancelActiveReservationWithPromotion(input.reservationId, {
+    userId: input.appUserId,
+    asAdmin: false,
+  });
+  if (!raw.ok) return false;
+  const pool = getPool();
+  if (pool) {
+    await bookingNotificationService.afterSeatFreed(pool, {
+      promoted: raw.promoted,
+      adminRejectedPendingConfirmation: false,
+      cancelledUserId: raw.cancelledUserId,
+      reservationId: input.reservationId,
+      classId: resv.classId,
+    });
+  }
+  return true;
 }

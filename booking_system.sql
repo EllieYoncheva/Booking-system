@@ -179,6 +179,8 @@ CREATE TABLE `Waitlist` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `position` INT NULL,
   `notifiedAt` DATETIME(6) NULL,
+  `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `status` ENUM('waiting', 'promoted', 'removed') NOT NULL DEFAULT 'waiting',
   `userId` INT NOT NULL,
   `classId` INT NOT NULL,
   PRIMARY KEY (`id`),
@@ -200,7 +202,7 @@ CREATE TABLE `Waitlist` (
 CREATE TABLE `Notifications` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `channel` ENUM('email', 'sms', 'push') NOT NULL DEFAULT 'email',
-  `type` ENUM('created', 'confirmed', 'cancelled', 'reminder') NOT NULL,
+  `type` ENUM('created', 'confirmed', 'cancelled', 'reminder', 'waitlist_promoted', 'admin_pending_action', 'reservation_rejected') NOT NULL,
   `status` ENUM('pending', 'sent', 'failed') NOT NULL DEFAULT 'pending',
   `sentAt` DATETIME(6) NULL,
   `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),

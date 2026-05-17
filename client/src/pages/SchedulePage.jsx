@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useOutletContext } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
+import { joinClassWaitlist, reserveClass } from "../utils/classBooking.js";
+import { alertAfterReserve } from "../utils/reservationAlerts.js";
 
 /** @param {string} iso */
 function localDateKey(iso) {
@@ -54,40 +56,82 @@ function groupClassesByDate(classes) {
 
 export default function SchedulePage() {
   const { authenticated, getToken, keycloak } = useOutletContext();
-  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
+  const [waitlistClassIds, setWaitlistClassIds] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  /** @type {[null | { classId: number, action: 'reserve' | 'waitlist' }]} */
+  const [busy, setBusy] = useState(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     setError("");
-    apiRequest(getToken, "/api/classes")
-      .then((j) => setClasses(j.classes ?? []))
+    const requests = [
+      apiRequest(getToken, "/api/classes").then((j) => setClasses(j.classes ?? [])),
+    ];
+    if (authenticated) {
+      requests.push(
+        apiRequest(getToken, "/api/me/waitlist").then((j) => {
+          const ids = new Set((j.waitlist ?? []).map((w) => Number(w.classId)));
+          setWaitlistClassIds(ids);
+        })
+      );
+    } else {
+      setWaitlistClassIds(new Set());
+    }
+    return Promise.all(requests)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  };
+  }, [authenticated, getToken]);
 
   useEffect(() => {
     load();
-  }, [getToken]);
+  }, [load]);
 
   const byDate = useMemo(() => groupClassesByDate(classes), [classes]);
 
-  const book = (classId) => {
+  const requireLogin = () => {
+    keycloak.login({ redirectUri: window.location.href });
+  };
+
+  /**
+   * @param {number|string} classId
+   * @param {'reserve' | 'waitlist'} action
+   */
+  const handleAction = (classId, action) => {
     if (!authenticated) {
-      keycloak.login({
-        redirectUri: `${window.location.origin}/bookings?classId=${classId}`,
-      });
+      requireLogin();
       return;
     }
-    navigate(`/bookings?classId=${classId}`);
+    setBusy({ classId: Number(classId), action });
+    setError("");
+    const request =
+      action === "reserve" ? reserveClass(getToken, classId) : joinClassWaitlist(getToken, classId);
+    request
+      .then((body) => {
+        if (action === "reserve") {
+          alertAfterReserve(body?.status);
+        } else {
+          const pos = body?.position;
+          window.alert(
+            pos != null
+              ? `Записани сте в чакащия лист. Ваша позиция: ${pos}.`
+              : "Записани сте в чакащия лист."
+          );
+        }
+        return load();
+      })
+      .catch((e) => {
+        setError(e.message);
+        window.alert(e.message || "Възникна грешка. Опитайте отново.");
+      })
+      .finally(() => setBusy(null));
   };
 
   return (
     <main className="page page--schedule">
       <h2>График на класове</h2>
-      <p className="muted">Показват се предстоящи класове със свободни места.</p>
+      <p className="muted">Показват се предстоящи класове със свободни места или възможност за чакащ лист.</p>
       {error && <div className="error-banner">{error}</div>}
       {loading ? (
         <p>Зареждане…</p>
@@ -106,6 +150,13 @@ export default function SchedulePage() {
               <ul className="schedule-card-list">
                 {dayClasses.map((c) => {
                   const spots = Number(c.spotsLeft);
+                  const hasSpots = Number.isFinite(spots) && spots >= 1;
+                  const full = !hasSpots;
+                  const classId = Number(c.id);
+                  const onWaitlist = waitlistClassIds.has(classId);
+                  const isReserveBusy = busy?.classId === classId && busy.action === "reserve";
+                  const isWaitlistBusy = busy?.classId === classId && busy.action === "waitlist";
+                  const anyBusy = busy != null;
                   const mins = Number(c.serviceDuration);
                   const title =
                     typeof c.name === "string" && c.name.trim() ? c.name.trim() : String(c.serviceName ?? "Клас");
@@ -136,18 +187,41 @@ export default function SchedulePage() {
                         <div className="schedule-card-text">
                           <span className="schedule-card-title">{title}</span>
                           <span className="schedule-card-sub">{subline}</span>
-                          
+                          {Number.isFinite(spots) && (
+                            <span className="schedule-card-sub">
+                              {full ? "Пълен клас" : `${spots} свободни места`}
+                            </span>
+                          )}
+                          {full && onWaitlist && (
+                            <span className="schedule-card-sub">Вече сте в чакащия лист</span>
+                          )}
                         </div>
                         <div className="schedule-card-actions">
-                          <button
-                            type="button"
-                            className="primary"
-                            disabled={!Number.isFinite(spots) || spots < 1}
-                            onClick={() => book(c.id)}
-                          >
-                            Запази час
-                          </button>
-                        
+                          {hasSpots ? (
+                            <button
+                              type="button"
+                              className="primary"
+                              disabled={anyBusy}
+                              onClick={() => handleAction(classId, "reserve")}
+                            >
+                              {isReserveBusy ? "…" : authenticated ? "Запази място" : "Вход — запази място"}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="waitlist"
+                              disabled={onWaitlist || anyBusy}
+                              onClick={() => handleAction(classId, "waitlist")}
+                            >
+                              {isWaitlistBusy
+                                ? "…"
+                                : onWaitlist
+                                  ? "В чакащия лист"
+                                  : authenticated
+                                    ? "Запиши в чакащ лист"
+                                    : "Вход — чакащ лист"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </li>
