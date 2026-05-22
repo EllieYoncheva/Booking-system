@@ -83,8 +83,6 @@ export default function ClassesAdminPage() {
   const [editingId, setEditingId] = useState(null);
   const [editingScheduleId, setEditingScheduleId] = useState(null);
   const [form, setForm] = useState({
-    name: "",
-    description: "",
     startsLocal: "",
     price: "",
     capacity: "10",
@@ -136,8 +134,6 @@ export default function ClassesAdminPage() {
   const reset = () => {
     setEditingId(null);
     setForm({
-      name: "",
-      description: "",
       startsLocal: "",
       price: "",
       capacity: "10",
@@ -157,8 +153,8 @@ export default function ClassesAdminPage() {
       return;
     }
     const base = {
-      name: form.name || null,
-      description: form.description || null,
+      name: null,
+      description: null,
       startsAt,
       price: form.price === "" ? null : Number(form.price),
       capacity: Number(form.capacity),
@@ -193,8 +189,6 @@ export default function ClassesAdminPage() {
   const edit = (c) => {
     setEditingId(c.id);
     setForm({
-      name: c.name ?? "",
-      description: c.description ?? "",
       startsLocal: toLocalInput(c.startsAt),
       price: c.price != null ? String(c.price) : "",
       capacity: String(c.capacity ?? 10),
@@ -312,14 +306,6 @@ export default function ClassesAdminPage() {
       {error && <div className="error-banner">{error}</div>}
       <div className="panel">
         <form className="form-grid" onSubmit={save} style={{ maxWidth: "36rem" }}>
-          <label>
-            Име (по избор)
-            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-          </label>
-          <label>
-            Описание
-            <textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-          </label>
           <label>
             Начало *
             <input

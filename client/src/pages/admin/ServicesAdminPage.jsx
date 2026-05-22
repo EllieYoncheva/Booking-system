@@ -7,7 +7,11 @@ export default function ServicesAdminPage() {
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", duration: "60" });
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    duration: "60",
+  });
 
   const load = () =>
     apiRequest(getToken, "/api/admin/services")
@@ -35,16 +39,25 @@ export default function ServicesAdminPage() {
     const req =
       editingId == null
         ? apiRequest(getToken, "/api/admin/services", { method: "POST", body })
-        : apiRequest(getToken, `/api/admin/services/${editingId}`, { method: "PATCH", body });
-    req.then(() => {
-      reset();
-      return load();
-    }).catch((err) => setError(err.message));
+        : apiRequest(getToken, `/api/admin/services/${editingId}`, {
+            method: "PATCH",
+            body,
+          });
+    req
+      .then(() => {
+        reset();
+        return load();
+      })
+      .catch((err) => setError(err.message));
   };
 
   const edit = (r) => {
     setEditingId(r.id);
-    setForm({ name: r.name ?? "", description: r.description ?? "", duration: String(r.duration ?? 60) });
+    setForm({
+      name: r.name ?? "",
+      description: r.description ?? "",
+      duration: String(r.duration ?? 60),
+    });
   };
 
   const remove = (id) => {
@@ -71,7 +84,13 @@ export default function ServicesAdminPage() {
           </label>
           <label>
             Описание
-            <textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            <textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description: e.target.value }))
+              }
+            />
           </label>
           <label>
             Продължителност (минути) *
@@ -80,7 +99,9 @@ export default function ServicesAdminPage() {
               type="number"
               min={1}
               value={form.duration}
-              onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, duration: e.target.value }))
+              }
             />
           </label>
           <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -115,7 +136,11 @@ export default function ServicesAdminPage() {
                   <button type="button" onClick={() => edit(r)}>
                     Редакция
                   </button>{" "}
-                  <button type="button" className="danger" onClick={() => remove(r.id)}>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() => remove(r.id)}
+                  >
                     Изтрий
                   </button>
                 </td>

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
+import {
+  canClientBookBeforeClass,
+  CLIENT_BOOKING_TOO_LATE_MESSAGE,
+} from "../utils/bookingPolicy.js";
 import { joinClassWaitlist, reserveClass } from "../utils/classBooking.js";
 import { activeBookedClassIds } from "../utils/bookingState.js";
 import {
@@ -11,51 +15,19 @@ import {
   confirmWaitlistJoin,
 } from "../utils/reservationAlerts.js";
 import {
+  classTitleFromRow,
   formatDayHeading,
-  formatTime,
+  formatTimeRange,
   groupRowsByDate,
+  instructorInitialsFromRow,
+  instructorNameFromRow,
 } from "../utils/scheduleDisplay.js";
-
-const STORAGE_KEY = "booking.selectedStudioId";
-
-/** @param {unknown} value */
-function parseStudioId(value) {
-  const n = Number(value);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
-/**
- * @param {Array<Record<string, unknown>>} studios
- * @param {URLSearchParams} searchParams
- */
-function resolveInitialStudioId(studios, searchParams) {
-  const ids = new Set(studios.map((s) => Number(s.id)));
-  const fromUrl = parseStudioId(searchParams.get("studioId"));
-  if (fromUrl != null && ids.has(fromUrl)) return fromUrl;
-  try {
-    const fromStorage = parseStudioId(sessionStorage.getItem(STORAGE_KEY));
-    if (fromStorage != null && ids.has(fromStorage)) return fromStorage;
-  } catch {
-    /* ignore */
-  }
-  if (studios.length === 1) return Number(studios[0].id);
-  return null;
-}
-
-/** @param {Record<string, unknown>} studio */
-function studioOptionLabel(studio) {
-  const name = String(studio.name ?? "").trim();
-  const city = studio.city ? String(studio.city).trim() : "";
-  return city ? `${name} · ${city}` : name;
-}
-
-/** @param {Record<string, unknown>} studio */
-function studioDetailLine(studio) {
-  return [studio.city, studio.address]
-    .map((v) => (v ? String(v).trim() : ""))
-    .filter(Boolean)
-    .join(", ");
-}
+import {
+  resolveInitialStudioId,
+  STUDIO_STORAGE_KEY,
+  studioDetailLine,
+  studioOptionLabel,
+} from "../utils/studioSelection.js";
 
 function PersonIcon() {
   return (
@@ -91,6 +63,17 @@ function ScheduleCapacityBadge({ capacity, spotsLeft }) {
   );
 }
 
+/** @param {Record<string, unknown>} row */
+function instructorPhotoUrlFromRow(row) {
+  if (typeof row.instructorPhotoUrl === "string" && row.instructorPhotoUrl.trim()) {
+    return row.instructorPhotoUrl.trim();
+  }
+  if (typeof row.instructorImageUrl === "string" && row.instructorImageUrl.trim()) {
+    return row.instructorImageUrl.trim();
+  }
+  return null;
+}
+
 export default function SchedulePage() {
   const { authenticated, getToken, keycloak } = useOutletContext();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -109,7 +92,7 @@ export default function SchedulePage() {
     (id) => {
       setSelectedStudioId(id);
       try {
-        sessionStorage.setItem(STORAGE_KEY, String(id));
+        sessionStorage.setItem(STUDIO_STORAGE_KEY, String(id));
       } catch {
         /* ignore */
       }
@@ -208,6 +191,14 @@ export default function SchedulePage() {
       requireLogin();
       return;
     }
+    if (action === "reserve") {
+      const cls = classes.find((c) => Number(c.id) === Number(classId));
+      if (cls && !canClientBookBeforeClass(cls.startsAt)) {
+        setError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
+        alertError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
+        return;
+      }
+    }
     const confirmed =
       action === "reserve" ? await confirmReserve() : await confirmWaitlistJoin();
     if (!confirmed) return;
@@ -301,98 +292,105 @@ export default function SchedulePage() {
                   const classId = Number(c.id);
                   const onWaitlist = waitlistClassIds.has(classId);
                   const alreadyBooked = bookedClassIds.has(classId);
+                  const bookingAllowed = canClientBookBeforeClass(c.startsAt);
                   const isReserveBusy =
                     busy?.classId === classId && busy.action === "reserve";
                   const isWaitlistBusy =
                     busy?.classId === classId && busy.action === "waitlist";
                   const anyBusy = busy != null;
-                  const mins = Number(c.serviceDuration);
-                  const title =
-                    typeof c.name === "string" && c.name.trim()
-                      ? c.name.trim()
-                      : String(c.serviceName ?? "Клас");
                   const cap = Number(c.capacity);
-                  const instructor = [
-                    c.instructorFirstName,
-                    c.instructorLastName,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .trim();
-                  let subline = "—";
-                  if (instructor) {
-                    subline = `${instructor}`;
+                  const notes = [];
+                  if (alreadyBooked) {
+                    notes.push("Вече имате резервация за този час");
+                  } else if (hasSpots && !bookingAllowed) {
+                    notes.push(CLIENT_BOOKING_TOO_LATE_MESSAGE);
+                  } else if (!hasSpots && onWaitlist) {
+                    notes.push("Вече сте в листа за чакащи");
                   }
-                
+
+                  const title = classTitleFromRow(c);
+                  const timeRange = formatTimeRange(c);
+                  const instructorName = instructorNameFromRow(c);
+                  const initials = instructorInitialsFromRow(c);
+                  const photoUrl = instructorPhotoUrlFromRow(c);
+
                   return (
                     <li key={c.id} className="schedule-card">
-                      <div className="schedule-card-time">
-                        <span className="schedule-card-time-start">
-                          {formatTime(String(c.startsAt))}
-                        </span>
-                        {Number.isFinite(mins) && mins > 0 && (
-                          <span className="schedule-card-time-duration">
-                            {mins} мин
-                          </span>
-                        )}
-                      </div>
-                      <div className="schedule-card-main">
-                        <div className="schedule-card-text">
-                          <span className="schedule-card-title">{title}</span>
-                          <span className="schedule-card-sub">{subline}</span>
-                          {alreadyBooked && (
-                            <span className="schedule-card-sub">
-                              Вече имате резервация за този час
-                            </span>
-                          )}
-                          {!hasSpots && onWaitlist && !alreadyBooked && (
-                            <span className="schedule-card-sub">
-                              Вече сте в листа за чакащи
-                            </span>
-                          )}
+                      <div className="schedule-card-inner">
+                        <p className="schedule-card-time-range">{timeRange}</p>
+                        <div className="schedule-card-rule" aria-hidden />
+                        <div className="schedule-card-info">
+                          <h4 className="schedule-card-title">{title}</h4>
+                          {notes.map((note) => (
+                            <p key={note} className="schedule-card-subtitle">
+                              {note}
+                            </p>
+                          ))}
                         </div>
-                        <div className="schedule-card-actions">
-                          <div className="schedule-card-actions-row">
-                            <ScheduleCapacityBadge
-                              capacity={cap}
-                              spotsLeft={spots}
+                        <div className="schedule-card-instructor">
+                          {photoUrl ? (
+                            <img
+                              src={photoUrl}
+                              alt=""
+                              className="schedule-card-avatar schedule-card-avatar--photo"
                             />
-                            {hasSpots || alreadyBooked ? (
-                              <button
-                                type="button"
-                                className="primary schedule-card-book-btn"
-                                disabled={
-                                  alreadyBooked || anyBusy || isReserveBusy
-                                }
-                                onClick={() =>
-                                  handleAction(classId, "reserve")
-                                }
-                              >
-                                {isReserveBusy
-                                  ? "…"
-                                  : alreadyBooked
-                                    ? "Резервирано"
-                                    : "Запази място"}
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="waitlist schedule-card-book-btn"
-                                disabled={
-                                  onWaitlist || anyBusy || isWaitlistBusy
-                                }
-                                onClick={() =>
-                                  handleAction(classId, "waitlist")
-                                }
-                              >
-                                {isWaitlistBusy
-                                  ? "…"
-                                  : onWaitlist
-                                    ? "В списъка на чакащи"
-                                    : "Запази в чакащи"}
-                              </button>
-                            )}
-                          </div>
+                          ) : (
+                            <span
+                              className="schedule-card-avatar"
+                              aria-hidden="true"
+                            >
+                              {initials}
+                            </span>
+                          )}
+                          <span
+                            className="schedule-card-instructor-name"
+                            title={instructorName}
+                          >
+                            {instructorName || "—"}
+                          </span>
+                        </div>
+                        <div className="schedule-card-end">
+                          <ScheduleCapacityBadge
+                            capacity={cap}
+                            spotsLeft={spots}
+                          />
+                          {hasSpots || alreadyBooked ? (
+                            <button
+                              type="button"
+                              className="primary schedule-card-book-btn"
+                              disabled={
+                                alreadyBooked ||
+                                !bookingAllowed ||
+                                anyBusy ||
+                                isReserveBusy
+                              }
+                              title={
+                                !bookingAllowed && !alreadyBooked
+                                  ? CLIENT_BOOKING_TOO_LATE_MESSAGE
+                                  : undefined
+                              }
+                              onClick={() => handleAction(classId, "reserve")}
+                            >
+                              {isReserveBusy
+                                ? "…"
+                                : alreadyBooked
+                                  ? "Резервирано"
+                                  : "Запази място"}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="waitlist schedule-card-book-btn"
+                              disabled={onWaitlist || anyBusy || isWaitlistBusy}
+                              onClick={() => handleAction(classId, "waitlist")}
+                            >
+                              {isWaitlistBusy
+                                ? "…"
+                                : onWaitlist
+                                  ? "В списъка на чакащи"
+                                  : "Запази в чакащи"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </li>

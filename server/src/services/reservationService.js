@@ -34,6 +34,7 @@ export async function createReservation(input) {
       CLASS_NOT_FOUND: ["Class not found", 404, "CLASS_NOT_FOUND"],
       CLASS_CANCELLED: ["Class is cancelled", 409, "CLASS_CANCELLED"],
       CLASS_ALREADY_STARTED: ["Class has already started", 400, "CLASS_ALREADY_STARTED"],
+      BOOKING_TOO_LATE: ["Booking window closed", 409, "BOOKING_TOO_LATE"],
       ALREADY_BOOKED: ["You already have an active booking for this class", 409, "DUPLICATE_BOOKING"],
       ALREADY_ON_WAITLIST: ["You are already on the waitlist for this class", 409, "ALREADY_ON_WAITLIST"],
     };

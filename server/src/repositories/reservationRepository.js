@@ -2,6 +2,7 @@ import { getPool } from "../db/pool.js";
 import * as classRepository from "./classRepository.js";
 import * as waitlistRepository from "./waitlistRepository.js";
 import { getNewReservationStatus } from "../services/appSettingsService.js";
+import { canClientBookBeforeClass } from "../utils/bookingPolicy.js";
 import { isDuplicateKeyError } from "../utils/mysqlErrors.js";
 
 const listSelect = `
@@ -9,6 +10,7 @@ const listSelect = `
     c.name AS className,
     c.startsAt AS classStartsAt,
     DATE_ADD(c.startsAt, INTERVAL s.duration MINUTE) AS classEndsAt,
+    c.studioId AS studioId,
     st.name AS studioName,
     s.name AS serviceName,
     s.duration AS serviceDuration
@@ -215,6 +217,10 @@ export async function bookClassSpot(userId, classId) {
       await conn.rollback();
       return { ok: false, code: "CLASS_ALREADY_STARTED" };
     }
+    if (!canClientBookBeforeClass(cls.startsAt)) {
+      await conn.rollback();
+      return { ok: false, code: "BOOKING_TOO_LATE" };
+    }
 
     const taken = await classRepository.countReservationsForClass(conn, classId);
     const cap = Number(cls.capacity);
@@ -278,6 +284,10 @@ export async function bookConfirmedOrJoinWaitlist(userId, classId) {
 
     const taken = await classRepository.countReservationsForClass(conn, classId);
     if (taken < cls.capacity) {
+      if (!canClientBookBeforeClass(cls.startsAt)) {
+        await conn.rollback();
+        return { ok: false, code: "BOOKING_TOO_LATE" };
+      }
       let reservationId;
       try {
         reservationId = await insertReservation(conn, userId, classId, initialStatus);

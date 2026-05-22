@@ -11,6 +11,7 @@ const listSelect = `
     c.name AS className,
     c.startsAt AS classStartsAt,
     c.endsAt AS classEndsAt,
+    c.studioId AS studioId,
     st.name AS studioName,
     s.name AS serviceName
   FROM \`Waitlist\` w

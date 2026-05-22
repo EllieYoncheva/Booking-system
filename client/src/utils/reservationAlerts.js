@@ -5,14 +5,15 @@ export function reserveSuccessMessage(status) {
   if (status === "confirmed") {
     return "Резервацията е потвърдена успешно.";
   }
-  return "Резервацията е изпратена и чака потвърждение от администратор.";
+  return "Вашата заявка ще бъде изпратена за потвърждение. След одобрение мястото ви в класа ще бъде запазено.";
 }
 
 /** @returns {Promise<boolean>} */
 export function confirmReserve() {
   return showAppAlert({
     title: "Резервация",
-    message: "Потвърждавате ли резервацията за този час?",
+    message:
+      "Сигурни ли сте, че желаете да запазите място за този клас? Отказ от резервация е възможен до 3 часа преди началото на класа.",
     confirmLabel: "Потвърди",
     cancelLabel: "Отказ",
     showCancel: true,
@@ -23,7 +24,8 @@ export function confirmReserve() {
 export function confirmWaitlistJoin() {
   return showAppAlert({
     title: "Списък за чакане",
-    message: "Потвърждавате ли запис в списъка за чакащи?",
+    message:
+      "В момента няма свободни места. Желаете ли да се запишете в списъка на чакащи? При освобождаване на място ще бъдете уведомени.",
     confirmLabel: "Потвърди",
     cancelLabel: "Отказ",
     showCancel: true,

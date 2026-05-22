@@ -72,56 +72,59 @@ export default function ProfilePage() {
       ) : (
         <section className="bookings-section">
           <div className="schedule-by-day">
-          <div className="profile-panel schedule-card profile-panel-card">
-            <p className="muted profile-panel-hint">
-              Имейлът идва от акаунта ви за вход и не може да се промени тук.
-            </p>
-            <form className="profile-form" onSubmit={save}>
-            <label className="profile-field profile-field--full">
-              <span className="profile-field-label">Имейл (само за преглед)</span>
-              <input type="email" readOnly value={accountEmail} />
-            </label>
-            <label className="profile-field">
-              <span className="profile-field-label">Име</span>
-              <input
-                required
-                value={form.firstName}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, firstName: e.target.value }))
-                }
-              />
-            </label>
-            <label className="profile-field">
-              <span className="profile-field-label">Фамилия</span>
-              <input
-                required
-                value={form.lastName}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, lastName: e.target.value }))
-                }
-              />
-            </label>
-            <label className="profile-field profile-field--full">
-              <span className="profile-field-label">Телефон</span>
-              <input
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
-                }
-                placeholder="По желание"
-              />
-            </label>
-            <div className="profile-form-actions">
-              <button
-                type="submit"
-                className="primary schedule-card-book-btn"
-                disabled={saving}
-              >
-                {saving ? "Запазване…" : "Запази"}
-              </button>
+            <div className="profile-panel schedule-card profile-panel-card">
+              <p className="muted profile-panel-hint">
+                Имейлът идва от акаунта ви за вход и не може да се промени тук.
+              </p>
+              <form className="profile-form" onSubmit={save}>
+                <label className="profile-field profile-field--full">
+                  <span className="profile-field-label">
+                    Имейл (само за преглед)
+                  </span>
+                  <input type="email" readOnly value={accountEmail} />
+                </label>
+                <label className="profile-field">
+                  <span className="profile-field-label">Име *</span>
+                  <input
+                    required
+                    value={form.firstName}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, firstName: e.target.value }))
+                    }
+                  />
+                </label>
+                <label className="profile-field">
+                  <span className="profile-field-label">Фамилия *</span>
+                  <input
+                    required
+                    value={form.lastName}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, lastName: e.target.value }))
+                    }
+                  />
+                </label>
+                <label className="profile-field profile-field--full">
+                  <span className="profile-field-label">Телефон *</span>
+                  <input
+                    required
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, phone: e.target.value }))
+                    }
+                    placeholder="По желание"
+                  />
+                </label>
+                <div className="profile-form-actions">
+                  <button
+                    type="submit"
+                    className="primary schedule-card-book-btn"
+                    disabled={saving}
+                  >
+                    {saving ? "Запазване…" : "Запази"}
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
-          </div>
           </div>
         </section>
       )}

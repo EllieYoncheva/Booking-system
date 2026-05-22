@@ -8,6 +8,7 @@ import * as waitlistRepository from "../repositories/waitlistRepository.js";
 import * as reservationService from "../services/reservationService.js";
 import { getPool } from "../db/pool.js";
 import * as bookingNotificationService from "../services/bookingNotificationService.js";
+import { CLIENT_BOOKING_TOO_LATE_MESSAGE } from "../utils/bookingPolicy.js";
 import { CLIENT_CANCEL_TOO_LATE_MESSAGE } from "../utils/cancellationPolicy.js";
 
 const router = Router();
@@ -68,6 +69,7 @@ router.post("/classes/:classId/reservations", async (req, res, next) => {
         CLASS_NOT_FOUND: { status: 404, error: "Класът не е намерен" },
         CLASS_CANCELLED: { status: 409, error: "Класът е отменен" },
         CLASS_ALREADY_STARTED: { status: 409, error: "Класът вече е започнал" },
+        BOOKING_TOO_LATE: { status: 409, error: CLIENT_BOOKING_TOO_LATE_MESSAGE },
         CLASS_FULL: { status: 409, error: "Няма свободни места" },
         ALREADY_BOOKED: { status: 409, error: "Вече имате резервация за този клас" },
       };
