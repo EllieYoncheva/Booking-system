@@ -2,20 +2,41 @@ import { Router } from "express";
 import { verifyKeycloakJwt } from "../middleware/keycloakJwt.js";
 import { attachAppUser } from "../middleware/attachAppUser.js";
 import * as classRepository from "../repositories/classRepository.js";
+import * as studioRepository from "../repositories/studioRepository.js";
 import * as reservationRepository from "../repositories/reservationRepository.js";
 import * as waitlistRepository from "../repositories/waitlistRepository.js";
 import * as reservationService from "../services/reservationService.js";
 import { getPool } from "../db/pool.js";
 import * as bookingNotificationService from "../services/bookingNotificationService.js";
+import { CLIENT_CANCEL_TOO_LATE_MESSAGE } from "../utils/cancellationPolicy.js";
 
 const router = Router();
 
+router.get("/studios", async (_req, res, next) => {
+  try {
+    const rows = await studioRepository.listStudios();
+    res.json({
+      studios: rows.map(({ id, name, city, address }) => ({
+        id,
+        name,
+        city: city ?? null,
+        address: address ?? null,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/classes", async (req, res, next) => {
   try {
-    const { from, to } = req.query;
+    const { from, to, studioId } = req.query;
     const range = {};
     if (typeof from === "string" && from.trim()) range.from = from.trim();
     if (typeof to === "string" && to.trim()) range.to = to.trim();
+    if (typeof studioId === "string" && studioId.trim()) {
+      range.studioId = Number(studioId);
+    }
     const rows = await classRepository.listPublicClassesWithSpots(range);
     res.json({ classes: rows });
   } catch (err) {
@@ -127,12 +148,20 @@ router.patch("/reservations/:id/cancel", async (req, res, next) => {
     if (!Number.isInteger(id) || id < 1) {
       return res.status(400).json({ error: "Invalid reservation id" });
     }
-    const ok = await reservationService.cancelReservationForClient({
+    const result = await reservationService.cancelReservationForClient({
       reservationId: id,
       appUserId: req.appUser.id,
     });
-    if (!ok) {
-      return res.status(404).json({ error: "Резервацията не е намерена или вече е анулирана" });
+    if (!result.ok) {
+      const map = {
+        CANCEL_TOO_LATE: { status: 409, error: CLIENT_CANCEL_TOO_LATE_MESSAGE },
+        NOT_FOUND: {
+          status: 404,
+          error: "Резервацията не е намерена или вече е анулирана",
+        },
+      };
+      const m = map[result.code] ?? map.NOT_FOUND;
+      return res.status(m.status).json({ error: m.error, code: result.code });
     }
     res.json({ ok: true });
   } catch (err) {

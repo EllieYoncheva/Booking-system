@@ -59,59 +59,72 @@ export default function ProfilePage() {
       .finally(() => setSaving(false));
   };
 
-  if (loading) {
-    return <p>Зареждане…</p>;
-  }
-
   return (
-    <main className="page">
+    <main className="page page--schedule">
       <h2>Моят профил</h2>
+      <p className="muted">
+        Актуализирайте личните си данни за резервации и контакт.
+      </p>
       {error && <div className="error-banner">{error}</div>}
-      {ok && (
-        <p className="ok block" style={{ marginBottom: "1rem" }}>
-          {ok}
-        </p>
-      )}
-      <div className="panel">
-        <p className="muted">
-          Имейлът идва от акаунта ви за вход и не може да се промени тук.
-        </p>
-        <form className="form-grid" onSubmit={save}>
-          <label style={{ gridColumn: "1 / -1" }}>
-            Имейл (само за преглед)
-            <input type="email" readOnly value={accountEmail} />
-          </label>
-          <label>
-            Име
-            <input
-              required
-              value={form.firstName}
-              onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-            />
-          </label>
-          <label>
-            Фамилия
-            <input
-              required
-              value={form.lastName}
-              onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-            />
-          </label>
-          <label style={{ gridColumn: "1 / -1" }}>
-            Телефон
-            <input
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-              placeholder="По желание"
-            />
-          </label>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <button type="submit" disabled={saving}>
-              {saving ? "Запазване…" : "Запази"}
-            </button>
+      {ok && <p className="ok-banner">{ok}</p>}
+      {loading ? (
+        <p>Зареждане…</p>
+      ) : (
+        <section className="bookings-section">
+          <div className="schedule-by-day">
+          <div className="profile-panel schedule-card profile-panel-card">
+            <p className="muted profile-panel-hint">
+              Имейлът идва от акаунта ви за вход и не може да се промени тук.
+            </p>
+            <form className="profile-form" onSubmit={save}>
+            <label className="profile-field profile-field--full">
+              <span className="profile-field-label">Имейл (само за преглед)</span>
+              <input type="email" readOnly value={accountEmail} />
+            </label>
+            <label className="profile-field">
+              <span className="profile-field-label">Име</span>
+              <input
+                required
+                value={form.firstName}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, firstName: e.target.value }))
+                }
+              />
+            </label>
+            <label className="profile-field">
+              <span className="profile-field-label">Фамилия</span>
+              <input
+                required
+                value={form.lastName}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, lastName: e.target.value }))
+                }
+              />
+            </label>
+            <label className="profile-field profile-field--full">
+              <span className="profile-field-label">Телефон</span>
+              <input
+                value={form.phone}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+                placeholder="По желание"
+              />
+            </label>
+            <div className="profile-form-actions">
+              <button
+                type="submit"
+                className="primary schedule-card-book-btn"
+                disabled={saving}
+              >
+                {saving ? "Запазване…" : "Запази"}
+              </button>
+            </div>
+          </form>
           </div>
-        </form>
-      </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

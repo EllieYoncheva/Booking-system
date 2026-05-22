@@ -2,117 +2,136 @@ import { useEffect, useMemo, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
 import { joinClassWaitlist, reserveClass } from "../utils/classBooking.js";
-import { alertAfterReserve } from "../utils/reservationAlerts.js";
+import { activeBookedClassIds } from "../utils/bookingState.js";
+import {
+  canClientCancelBeforeClass,
+  CLIENT_CANCEL_TOO_LATE_MESSAGE,
+} from "../utils/cancellationPolicy.js";
+import {
+  alertAfterReserve,
+  alertError,
+  alertMessage,
+  confirmReserve,
+  confirmWaitlistJoin,
+} from "../utils/reservationAlerts.js";
 import { RESERVATION_STATUS_BG } from "../utils/reservationStatusBg.js";
+import {
+  classTitleFromRow,
+  formatDayHeading,
+  formatTime,
+  groupRowsByDate,
+  serviceDurationMins,
+} from "../utils/scheduleDisplay.js";
 
 const MY_STATUS_LABELS = {
   ...RESERVATION_STATUS_BG,
   cancelled_by_user: "Анулирана от вас",
 };
 
-function formatWhen(iso) {
-  try {
-    return new Date(iso).toLocaleString("bg-BG", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  } catch {
-    return String(iso);
-  }
-}
-
 function startOfToday() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 }
 
-function ReservationTable({ rows, cancelling, canCancel, cancel }) {
-  if (rows.length === 0) {
-    return <p className="muted">Няма резервации в тази секция.</p>;
-  }
-
+/**
+ * @param {string} startsAt
+ * @param {number | null} durationMins
+ */
+function BookingCardTime({ startsAt, durationMins }) {
   return (
-    <div className="panel table-wrap">
-      <table className="data">
-        <thead>
-          <tr>
-            <th>Клас</th>
-            <th>Кога</th>
-            <th>Студио</th>
-            <th>Статус</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id}>
-              <td>{r.className || r.serviceName || "—"}</td>
-              <td>
-                {formatWhen(r.classStartsAt)} – {formatWhen(r.classEndsAt)}
-              </td>
-              <td>{r.studioName}</td>
-              <td>{MY_STATUS_LABELS[r.status] ?? r.status}</td>
-              <td>
-                {canCancel(r.status) && (
-                  <button
-                    type="button"
-                    className="danger"
-                    disabled={cancelling === r.id}
-                    onClick={() => cancel(r.id)}
-                  >
-                    {cancelling === r.id ? "…" : "Анулирай"}
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="schedule-card-time">
+      <span className="schedule-card-time-start">
+        {formatTime(String(startsAt))}
+      </span>
+      {durationMins != null && (
+        <span className="schedule-card-time-duration">{durationMins} мин</span>
+      )}
     </div>
   );
 }
 
-function WaitlistTable({ rows, leaving, leave }) {
-  if (rows.length === 0) {
-    return <p className="muted">Няма активни позиции в списъци за чакане.</p>;
-  }
+/**
+ * @param {Record<string, unknown>} row
+ */
+function ReservationCardContent({ row, cancelling, canCancelStatus, onCancel }) {
+  const mins = serviceDurationMins(row);
+  const statusLabel = MY_STATUS_LABELS[row.status] ?? String(row.status ?? "—");
+  const studio = row.studioName ? String(row.studioName).trim() : "";
+  const showCancelBtn = canCancelStatus(row.status);
+  const cancelAllowed = canClientCancelBeforeClass(row.classStartsAt);
 
   return (
-    <div className="panel table-wrap">
-      <table className="data">
-        <thead>
-          <tr>
-            <th>Клас</th>
-            <th>Кога</th>
-            <th>Студио</th>
-            <th>Позиция</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((w) => (
-            <tr key={w.id}>
-              <td>{w.className || w.serviceName || "—"}</td>
-              <td>
-                {formatWhen(w.classStartsAt)} – {formatWhen(w.classEndsAt)}
-              </td>
-              <td>{w.studioName}</td>
-              <td>{w.position != null ? `${w.position}` : "—"}</td>
-              <td>
-                <button
-                  type="button"
-                  className="danger"
-                  disabled={leaving === w.classId}
-                  onClick={() => leave(w.classId)}
-                >
-                  {leaving === w.classId ? "…" : "Напусни списъка"}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <BookingCardTime startsAt={String(row.classStartsAt)} durationMins={mins} />
+      <div className="schedule-card-main">
+        <div className="schedule-card-text">
+          <span className="schedule-card-title">{classTitleFromRow(row)}</span>
+          {studio ? <span className="schedule-card-sub">{studio}</span> : null}
+          <span className="schedule-card-sub schedule-card-status">
+            {statusLabel}
+          </span>
+          {showCancelBtn && !cancelAllowed && (
+            <span className="schedule-card-sub">
+              {CLIENT_CANCEL_TOO_LATE_MESSAGE}
+            </span>
+          )}
+        </div>
+        <div className="schedule-card-actions">
+          <div className="schedule-card-actions-row">
+            {showCancelBtn ? (
+              <button
+                type="button"
+                className="danger schedule-card-book-btn"
+                disabled={cancelling === row.id || !cancelAllowed}
+                title={
+                  !cancelAllowed ? CLIENT_CANCEL_TOO_LATE_MESSAGE : undefined
+                }
+                onClick={() => onCancel(row.id)}
+              >
+                {cancelling === row.id ? "…" : "Анулирай"}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * @param {Record<string, unknown>} row
+ */
+function WaitlistCardContent({ row, leaving, onLeave }) {
+  const mins = serviceDurationMins(row);
+  const studio = row.studioName ? String(row.studioName).trim() : "";
+  const position =
+    row.position != null ? `Позиция в списъка: ${row.position}` : null;
+
+  return (
+    <>
+      <BookingCardTime startsAt={String(row.classStartsAt)} durationMins={mins} />
+      <div className="schedule-card-main">
+        <div className="schedule-card-text">
+          <span className="schedule-card-title">{classTitleFromRow(row)}</span>
+          {studio ? <span className="schedule-card-sub">{studio}</span> : null}
+          {position ? (
+            <span className="schedule-card-sub">{position}</span>
+          ) : null}
+        </div>
+        <div className="schedule-card-actions">
+          <div className="schedule-card-actions-row">
+            <button
+              type="button"
+              className="danger schedule-card-book-btn"
+              disabled={leaving === row.classId}
+              onClick={() => onLeave(row.classId)}
+            >
+              {leaving === row.classId ? "…" : "Напусни списъка"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -137,8 +156,16 @@ export default function MyBookingsPage() {
     const requests = [];
 
     if (authenticated) {
-      requests.push(apiRequest(getToken, "/api/me/reservations").then((j) => setRows(j.reservations ?? [])));
-      requests.push(apiRequest(getToken, "/api/me/waitlist").then((j) => setWaitlistRows(j.waitlist ?? [])));
+      requests.push(
+        apiRequest(getToken, "/api/me/reservations").then((j) =>
+          setRows(j.reservations ?? []),
+        ),
+      );
+      requests.push(
+        apiRequest(getToken, "/api/me/waitlist").then((j) =>
+          setWaitlistRows(j.waitlist ?? []),
+        ),
+      );
     } else {
       setRows([]);
       setWaitlistRows([]);
@@ -147,9 +174,11 @@ export default function MyBookingsPage() {
     if (selectedClassId) {
       requests.push(
         apiRequest(getToken, "/api/classes").then((j) => {
-          const found = (j.classes ?? []).find((c) => String(c.id) === String(selectedClassId));
+          const found = (j.classes ?? []).find(
+            (c) => String(c.id) === String(selectedClassId),
+          );
           setSelectedClass(found ?? null);
-        })
+        }),
       );
     } else {
       setSelectedClass(null);
@@ -164,7 +193,17 @@ export default function MyBookingsPage() {
     load();
   }, [authenticated, getToken, selectedClassId]);
 
-  const canCancel = (s) => s === "pending" || s === "confirmed";
+  const canCancelStatus = (s) => s === "pending" || s === "confirmed";
+
+  const bookedClassIds = useMemo(
+    () => activeBookedClassIds(rows),
+    [rows],
+  );
+
+  const waitlistClassIds = useMemo(
+    () => new Set(waitlistRows.map((w) => Number(w.classId))),
+    [waitlistRows],
+  );
 
   const { upcoming, past } = useMemo(() => {
     const today = startOfToday();
@@ -175,10 +214,14 @@ export default function MyBookingsPage() {
         else acc.upcoming.push(row);
         return acc;
       },
-      { upcoming: [], past: [] }
+      { upcoming: [], past: [] },
     );
-    grouped.upcoming.sort((a, b) => new Date(a.classStartsAt) - new Date(b.classStartsAt));
-    grouped.past.sort((a, b) => new Date(b.classStartsAt) - new Date(a.classStartsAt));
+    grouped.upcoming.sort(
+      (a, b) => new Date(a.classStartsAt) - new Date(b.classStartsAt),
+    );
+    grouped.past.sort(
+      (a, b) => new Date(b.classStartsAt) - new Date(a.classStartsAt),
+    );
     return grouped;
   }, [rows]);
 
@@ -210,7 +253,7 @@ export default function MyBookingsPage() {
       .finally(() => setLeavingWaitlist(null));
   };
 
-  const handleSelectedClassAction = (action) => {
+  const handleSelectedClassAction = async (action) => {
     if (!authenticated) {
       login();
       return;
@@ -221,6 +264,10 @@ export default function MyBookingsPage() {
     if (action === "reserve" && !hasSpots) return;
     if (action === "waitlist" && hasSpots) return;
 
+    const confirmed =
+      action === "reserve" ? await confirmReserve() : await confirmWaitlistJoin();
+    if (!confirmed) return;
+
     setBookingAction(action);
     setError("");
     const request =
@@ -230,34 +277,61 @@ export default function MyBookingsPage() {
     request
       .then((body) => {
         if (action === "reserve") {
-          alertAfterReserve(body?.status);
-        } else {
-          const pos = body?.position;
-          window.alert(
-            pos != null
-              ? `Добавени сте в списъка за чакане. Ваша позиция: ${pos}.`
-              : "Добавени сте в списъка за чакане."
-          );
+          return alertAfterReserve(body?.status).then(() => load());
         }
-        return load();
+        const pos = body?.position;
+        return alertMessage(
+          pos != null
+            ? `Добавени сте в списъка за чакане. Ваша позиция: ${pos}.`
+            : "Добавени сте в списъка за чакане.",
+          "Списък за чакане",
+        ).then(() => load());
       })
       .catch((e) => {
         setError(e.message);
-        window.alert(e.message || "Възникна грешка. Опитайте отново.");
+        alertError(e.message);
       })
       .finally(() => setBookingAction(null));
   };
 
+  const selectedSpots = Number(selectedClass?.spotsLeft);
+  const selectedHasSpots =
+    Number.isFinite(selectedSpots) && selectedSpots >= 1;
+  const selectedClassIdNum = selectedClass ? Number(selectedClass.id) : null;
+  const selectedAlreadyBooked =
+    selectedClassIdNum != null && bookedClassIds.has(selectedClassIdNum);
+  const selectedOnWaitlist =
+    selectedClassIdNum != null && waitlistClassIds.has(selectedClassIdNum);
+
+  const reservationRows =
+    reservationListTab === "upcoming" ? upcoming : past;
+  const waitlistByDate = useMemo(
+    () => groupRowsByDate(waitlistRows),
+    [waitlistRows],
+  );
+  const reservationsByDate = useMemo(
+    () => groupRowsByDate(reservationRows),
+    [reservationRows],
+  );
+
   return (
-    <main className="page">
-      <h2>Резервации</h2>
+    <main className="page page--schedule">
+      <h2>Мои резервации</h2>
+      <p className="muted">
+        Предстоящи и минали резервации, както и активни позиции в списъци за
+        чакане.
+      </p>
       {error && <div className="error-banner">{error}</div>}
       {loading ? (
         <p>Зареждане…</p>
       ) : (
         <>
           {authenticated && (
-            <div className="btn-group" role="group" aria-label="Филтър на резервации">
+            <div
+              className="btn-group"
+              role="group"
+              aria-label="Филтър на резервации"
+            >
               <button
                 type="button"
                 className={reservationListTab === "upcoming" ? "is-active" : ""}
@@ -276,71 +350,177 @@ export default function MyBookingsPage() {
           )}
 
           {selectedClassId && (
-            <section className="panel">
-              <h3>Избран час</h3>
+            <section className="bookings-section">
+              <h3 className="bookings-section-heading">Избран час</h3>
               {selectedClass ? (
-                <>
-                  <p>
-                    <strong>{selectedClass.name || selectedClass.serviceName || "Клас"}</strong>
-                    <br />
-                    {formatWhen(selectedClass.startsAt)} – {formatWhen(selectedClass.endsAt)}
-                    {selectedClass.studioName ? `, ${selectedClass.studioName}` : ""}
-                  </p>
-                  <div className="schedule-card-actions" style={{ marginTop: "0.75rem" }}>
-                    <button
-                      type="button"
-                      className="primary"
-                      disabled={
-                        bookingAction != null ||
-                        !(Number.isFinite(Number(selectedClass.spotsLeft)) && Number(selectedClass.spotsLeft) >= 1)
-                      }
-                      onClick={() => handleSelectedClassAction("reserve")}
-                    >
-                      {bookingAction === "reserve" ? "…" : authenticated ? "Запази" : "Вход — запази"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={
-                        bookingAction != null ||
-                        (Number.isFinite(Number(selectedClass.spotsLeft)) && Number(selectedClass.spotsLeft) >= 1)
-                      }
-                      onClick={() => handleSelectedClassAction("waitlist")}
-                    >
-                      {bookingAction === "waitlist" ? "…" : authenticated ? "Списък на изчакване" : "Вход — изчакване"}
-                    </button>
-                  </div>
-                </>
+                <ul className="schedule-card-list">
+                  <li className="schedule-card">
+                    <BookingCardTime
+                      startsAt={String(selectedClass.startsAt)}
+                      durationMins={serviceDurationMins(selectedClass)}
+                    />
+                    <div className="schedule-card-main">
+                      <div className="schedule-card-text">
+                        <span className="schedule-card-title">
+                          {classTitleFromRow(selectedClass)}
+                        </span>
+                        {selectedClass.studioName ? (
+                          <span className="schedule-card-sub">
+                            {String(selectedClass.studioName)}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="schedule-card-actions">
+                        <div className="schedule-card-actions-row">
+                          {selectedHasSpots || selectedAlreadyBooked ? (
+                            <button
+                              type="button"
+                              className="primary schedule-card-book-btn"
+                              disabled={
+                                selectedAlreadyBooked ||
+                                bookingAction != null
+                              }
+                              onClick={() =>
+                                handleSelectedClassAction("reserve")
+                              }
+                            >
+                              {bookingAction === "reserve"
+                                ? "…"
+                                : selectedAlreadyBooked
+                                  ? "Резервирано"
+                                  : "Запази място"}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="waitlist schedule-card-book-btn"
+                              disabled={
+                                selectedOnWaitlist || bookingAction != null
+                              }
+                              onClick={() =>
+                                handleSelectedClassAction("waitlist")
+                              }
+                            >
+                              {bookingAction === "waitlist"
+                                ? "…"
+                                : selectedOnWaitlist
+                                  ? "В списъка на чакащи"
+                                  : "Запази в чакащи"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
               ) : (
-                <p className="muted">Избраният час не е намерен или вече не е наличен.</p>
+                <p className="muted">
+                  Избраният час не е намерен или вече не е наличен.
+                </p>
               )}
             </section>
           )}
 
           {!authenticated ? (
-            <section className="panel">
-              <h3>Моите резервации</h3>
-              <p className="muted">Влезте в профила си, за да видите или управлявате своите резервации.</p>
-              <button type="button" onClick={login}>
+            <section className="bookings-section">
+              <p className="muted">
+                Влезте в профила си, за да видите или управлявате своите
+                резервации.
+              </p>
+              <button type="button" className="primary" onClick={login}>
                 Вход
               </button>
             </section>
           ) : (
             <>
-              <section className="panel" aria-labelledby="waitlist-heading">
-                <h3 id="waitlist-heading">Списъци за чакане</h3>
-                <WaitlistTable rows={waitlistRows} leaving={leavingWaitlist} leave={leaveWaitlist} />
+              <section
+                className="bookings-section"
+                aria-labelledby="waitlist-heading"
+              >
+                <h3 id="waitlist-heading" className="bookings-section-heading">
+                  Списъци за чакане
+                </h3>
+                {waitlistRows.length === 0 ? (
+                  <p className="muted">
+                    Няма активни позиции в списъци за чакане.
+                  </p>
+                ) : (
+                  <div className="schedule-by-day">
+                    {waitlistByDate.map(([dateKey, dayRows]) => (
+                      <section
+                        key={dateKey}
+                        className="schedule-day"
+                        aria-labelledby={`waitlist-day-${dateKey}`}
+                      >
+                        <h4
+                          id={`waitlist-day-${dateKey}`}
+                          className="schedule-day-heading"
+                        >
+                          {formatDayHeading(String(dayRows[0].classStartsAt))}
+                        </h4>
+                        <div className="schedule-day-line" aria-hidden />
+                        <ul className="schedule-card-list">
+                          {dayRows.map((w) => (
+                            <li key={String(w.id)} className="schedule-card">
+                              <WaitlistCardContent
+                                row={w}
+                                leaving={leavingWaitlist}
+                                onLeave={leaveWaitlist}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ))}
+                  </div>
+                )}
               </section>
 
-              <section aria-labelledby="reservations-tab-heading">
-                <h3 id="reservations-tab-heading" className="visually-hidden">
-                  {reservationListTab === "upcoming" ? "Предстоящи резервации" : "Минали резервации"}
+              <section
+                className="bookings-section"
+                aria-labelledby="reservations-tab-heading"
+              >
+                <h3
+                  id="reservations-tab-heading"
+                  className="bookings-section-heading"
+                >
+                  {reservationListTab === "upcoming"
+                    ? "Предстоящи резервации"
+                    : "Минали резервации"}
                 </h3>
-                <ReservationTable
-                  rows={reservationListTab === "upcoming" ? upcoming : past}
-                  cancelling={cancelling}
-                  canCancel={canCancel}
-                  cancel={cancel}
-                />
+                {reservationRows.length === 0 ? (
+                  <p className="muted">Няма резервации в тази секция.</p>
+                ) : (
+                  <div className="schedule-by-day">
+                    {reservationsByDate.map(([dateKey, dayRows]) => (
+                      <section
+                        key={dateKey}
+                        className="schedule-day"
+                        aria-labelledby={`res-day-${dateKey}`}
+                      >
+                        <h4
+                          id={`res-day-${dateKey}`}
+                          className="schedule-day-heading"
+                        >
+                          {formatDayHeading(String(dayRows[0].classStartsAt))}
+                        </h4>
+                        <div className="schedule-day-line" aria-hidden />
+                        <ul className="schedule-card-list">
+                          {dayRows.map((r) => (
+                            <li key={String(r.id)} className="schedule-card">
+                              <ReservationCardContent
+                                row={r}
+                                cancelling={cancelling}
+                                canCancelStatus={canCancelStatus}
+                                onCancel={cancel}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ))}
+                  </div>
+                )}
               </section>
             </>
           )}

@@ -1,94 +1,199 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
 import { joinClassWaitlist, reserveClass } from "../utils/classBooking.js";
-import { alertAfterReserve } from "../utils/reservationAlerts.js";
+import { activeBookedClassIds } from "../utils/bookingState.js";
+import {
+  alertAfterReserve,
+  alertError,
+  alertMessage,
+  confirmReserve,
+  confirmWaitlistJoin,
+} from "../utils/reservationAlerts.js";
+import {
+  formatDayHeading,
+  formatTime,
+  groupRowsByDate,
+} from "../utils/scheduleDisplay.js";
 
-/** @param {string} iso */
-function localDateKey(iso) {
-  const d = new Date(iso);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+const STORAGE_KEY = "booking.selectedStudioId";
 
-/** @param {string} iso */
-function formatDayHeading(iso) {
-  try {
-    return new Date(iso).toLocaleDateString("bg-BG", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  } catch {
-    return String(iso);
-  }
-}
-
-/** @param {string} iso */
-function formatTime(iso) {
-  try {
-    return new Date(iso).toLocaleTimeString("bg-BG", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  } catch {
-    return String(iso);
-  }
+/** @param {unknown} value */
+function parseStudioId(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
 }
 
 /**
- * @param {Array<Record<string, unknown>>} classes
- * @returns {Array<[string, Array<Record<string, unknown>>]>}
+ * @param {Array<Record<string, unknown>>} studios
+ * @param {URLSearchParams} searchParams
  */
-function groupClassesByDate(classes) {
-  const map = new Map();
-  for (const c of classes) {
-    const key = localDateKey(String(c.startsAt));
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(c);
+function resolveInitialStudioId(studios, searchParams) {
+  const ids = new Set(studios.map((s) => Number(s.id)));
+  const fromUrl = parseStudioId(searchParams.get("studioId"));
+  if (fromUrl != null && ids.has(fromUrl)) return fromUrl;
+  try {
+    const fromStorage = parseStudioId(sessionStorage.getItem(STORAGE_KEY));
+    if (fromStorage != null && ids.has(fromStorage)) return fromStorage;
+  } catch {
+    /* ignore */
   }
-  return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  if (studios.length === 1) return Number(studios[0].id);
+  return null;
+}
+
+/** @param {Record<string, unknown>} studio */
+function studioOptionLabel(studio) {
+  const name = String(studio.name ?? "").trim();
+  const city = studio.city ? String(studio.city).trim() : "";
+  return city ? `${name} · ${city}` : name;
+}
+
+/** @param {Record<string, unknown>} studio */
+function studioDetailLine(studio) {
+  return [studio.city, studio.address]
+    .map((v) => (v ? String(v).trim() : ""))
+    .filter(Boolean)
+    .join(", ");
+}
+
+function PersonIcon() {
+  return (
+    <svg
+      className="schedule-card-capacity-icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 640 640"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M240 192C240 147.8 275.8 112 320 112C364.2 112 400 147.8 400 192C400 236.2 364.2 272 320 272C275.8 272 240 236.2 240 192zM448 192C448 121.3 390.7 64 320 64C249.3 64 192 121.3 192 192C192 262.7 249.3 320 320 320C390.7 320 448 262.7 448 192zM144 544C144 473.3 201.3 416 272 416L368 416C438.7 416 496 473.3 496 544L496 552C496 565.3 506.7 576 520 576C533.3 576 544 565.3 544 552L544 544C544 446.8 465.2 368 368 368L272 368C174.8 368 96 446.8 96 544L96 552C96 565.3 106.7 576 120 576C133.3 576 144 565.3 144 552L144 544z" />
+    </svg>
+  );
+}
+
+/** @param {{ capacity: number, spotsLeft: number }} props */
+function ScheduleCapacityBadge({ capacity, spotsLeft }) {
+  if (!Number.isFinite(capacity) || capacity <= 0 || !Number.isFinite(spotsLeft)) {
+    return null;
+  }
+  const full = spotsLeft < 1;
+  const reserved = Math.min(capacity, Math.max(0, capacity - spotsLeft));
+  return (
+    <span
+      className={`schedule-card-capacity${full ? " schedule-card-capacity--full" : ""}`}
+      aria-label={`${reserved} от ${capacity} запазени места`}
+    >
+      <PersonIcon />
+      <span className="schedule-card-capacity-text">
+        {reserved}/{capacity}
+      </span>
+    </span>
+  );
 }
 
 export default function SchedulePage() {
   const { authenticated, getToken, keycloak } = useOutletContext();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [studios, setStudios] = useState([]);
+  const [studiosLoading, setStudiosLoading] = useState(true);
+  const [selectedStudioId, setSelectedStudioId] = useState(null);
   const [classes, setClasses] = useState([]);
   const [waitlistClassIds, setWaitlistClassIds] = useState(() => new Set());
-  const [loading, setLoading] = useState(true);
+  const [bookedClassIds, setBookedClassIds] = useState(() => new Set());
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   /** @type {[null | { classId: number, action: 'reserve' | 'waitlist' }]} */
   const [busy, setBusy] = useState(null);
 
+  const applyStudioSelection = useCallback(
+    (id) => {
+      setSelectedStudioId(id);
+      try {
+        sessionStorage.setItem(STORAGE_KEY, String(id));
+      } catch {
+        /* ignore */
+      }
+      setSearchParams({ studioId: String(id) }, { replace: true });
+    },
+    [setSearchParams],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setStudiosLoading(true);
+    setError("");
+    apiRequest(getToken, "/api/studios")
+      .then((j) => {
+        if (cancelled) return;
+        const list = j.studios ?? [];
+        setStudios(list);
+        setSelectedStudioId(resolveInitialStudioId(list, searchParams));
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setStudiosLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Resolve from URL/session only on initial studio load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken]);
+
   const load = useCallback(() => {
+    if (selectedStudioId == null) {
+      setClasses([]);
+      setWaitlistClassIds(new Set());
+      setBookedClassIds(new Set());
+      setLoading(false);
+      return Promise.resolve();
+    }
     setLoading(true);
     setError("");
     const requests = [
-      apiRequest(getToken, "/api/classes").then((j) => setClasses(j.classes ?? [])),
+      apiRequest(getToken, `/api/classes?studioId=${selectedStudioId}`).then(
+        (j) => setClasses(j.classes ?? []),
+      ),
     ];
     if (authenticated) {
       requests.push(
         apiRequest(getToken, "/api/me/waitlist").then((j) => {
           const ids = new Set((j.waitlist ?? []).map((w) => Number(w.classId)));
           setWaitlistClassIds(ids);
-        })
+        }),
+      );
+      requests.push(
+        apiRequest(getToken, "/api/me/reservations").then((j) => {
+          setBookedClassIds(activeBookedClassIds(j.reservations ?? []));
+        }),
       );
     } else {
       setWaitlistClassIds(new Set());
+      setBookedClassIds(new Set());
     }
     return Promise.all(requests)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [authenticated, getToken]);
+  }, [authenticated, getToken, selectedStudioId]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!studiosLoading) load();
+  }, [load, studiosLoading]);
 
-  const byDate = useMemo(() => groupClassesByDate(classes), [classes]);
+  const byDate = useMemo(
+    () => groupRowsByDate(classes, "startsAt"),
+    [classes],
+  );
+
+  const selectedStudio = useMemo(
+    () => studios.find((s) => Number(s.id) === selectedStudioId) ?? null,
+    [studios, selectedStudioId],
+  );
+
+  const pickerOpen =
+    !studiosLoading && studios.length > 1 && selectedStudioId == null;
 
   const requireLogin = () => {
     keycloak.login({ redirectUri: window.location.href });
@@ -98,52 +203,94 @@ export default function SchedulePage() {
    * @param {number|string} classId
    * @param {'reserve' | 'waitlist'} action
    */
-  const handleAction = (classId, action) => {
+  const handleAction = async (classId, action) => {
     if (!authenticated) {
       requireLogin();
       return;
     }
+    const confirmed =
+      action === "reserve" ? await confirmReserve() : await confirmWaitlistJoin();
+    if (!confirmed) return;
+
     setBusy({ classId: Number(classId), action });
     setError("");
     const request =
-      action === "reserve" ? reserveClass(getToken, classId) : joinClassWaitlist(getToken, classId);
+      action === "reserve"
+        ? reserveClass(getToken, classId)
+        : joinClassWaitlist(getToken, classId);
     request
       .then((body) => {
         if (action === "reserve") {
-          alertAfterReserve(body?.status);
-        } else {
-          const pos = body?.position;
-          window.alert(
-            pos != null
-              ? `Записани сте в чакащия лист. Ваша позиция: ${pos}.`
-              : "Записани сте в чакащия лист."
-          );
+          return alertAfterReserve(body?.status).then(() => load());
         }
-        return load();
+        const pos = body?.position;
+        return alertMessage(
+          pos != null
+            ? `Записани сте в листа за чакащи. Ваша позиция: ${pos}.`
+            : "Записани сте в листа за чакащи.",
+          "Списък за чакане",
+        ).then(() => load());
       })
       .catch((e) => {
         setError(e.message);
-        window.alert(e.message || "Възникна грешка. Опитайте отново.");
+        alertError(e.message);
       })
       .finally(() => setBusy(null));
   };
 
+  const subtitle =
+    selectedStudio && studios.length > 1
+      ? `График — ${String(selectedStudio.name ?? "").trim()}`
+      : "Показват се предстоящи класове със свободни места или възможност за чакащ лист.";
+
   return (
     <main className="page page--schedule">
       <h2>График на класове</h2>
-      <p className="muted">Показват се предстоящи класове със свободни места или възможност за чакащ лист.</p>
+      {studios.length > 1 && selectedStudioId != null && (
+        <div className="schedule-studio-bar">
+          <label htmlFor="schedule-studio-select">Студио</label>
+          <select
+            id="schedule-studio-select"
+            value={String(selectedStudioId)}
+            onChange={(e) => applyStudioSelection(Number(e.target.value))}
+          >
+            {studios.map((s) => (
+              <option key={String(s.id)} value={String(s.id)}>
+                {studioOptionLabel(s)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <p className="muted">{subtitle}</p>
       {error && <div className="error-banner">{error}</div>}
-      {loading ? (
+
+      {studiosLoading ? (
+        <p>Зареждане…</p>
+      ) : studios.length === 0 ? (
+        <p className="muted">
+          Няма активни студиа. Добавете студио от админ панела или стартирайте
+          seed скрипта.
+        </p>
+      ) : pickerOpen ? null : loading ? (
         <p>Зареждане…</p>
       ) : classes.length === 0 ? (
         <p className="muted">
-          Няма предстоящи класове. Добавете данни от админ панела или стартирайте seed скрипта.
+          Няма предстоящи класове за това студио. Добавете данни от админ панела
+          или стартирайте seed скрипта.
         </p>
       ) : (
         <div className="schedule-by-day">
           {byDate.map(([dateKey, dayClasses]) => (
-            <section key={dateKey} className="schedule-day" aria-labelledby={`schedule-heading-${dateKey}`}>
-              <h3 id={`schedule-heading-${dateKey}`} className="schedule-day-heading">
+            <section
+              key={dateKey}
+              className="schedule-day"
+              aria-labelledby={`schedule-heading-${dateKey}`}
+            >
+              <h3
+                id={`schedule-heading-${dateKey}`}
+                className="schedule-day-heading"
+              >
                 {formatDayHeading(String(dayClasses[0].startsAt))}
               </h3>
               <div className="schedule-day-line" aria-hidden />
@@ -151,77 +298,101 @@ export default function SchedulePage() {
                 {dayClasses.map((c) => {
                   const spots = Number(c.spotsLeft);
                   const hasSpots = Number.isFinite(spots) && spots >= 1;
-                  const full = !hasSpots;
                   const classId = Number(c.id);
                   const onWaitlist = waitlistClassIds.has(classId);
-                  const isReserveBusy = busy?.classId === classId && busy.action === "reserve";
-                  const isWaitlistBusy = busy?.classId === classId && busy.action === "waitlist";
+                  const alreadyBooked = bookedClassIds.has(classId);
+                  const isReserveBusy =
+                    busy?.classId === classId && busy.action === "reserve";
+                  const isWaitlistBusy =
+                    busy?.classId === classId && busy.action === "waitlist";
                   const anyBusy = busy != null;
                   const mins = Number(c.serviceDuration);
                   const title =
-                    typeof c.name === "string" && c.name.trim() ? c.name.trim() : String(c.serviceName ?? "Клас");
+                    typeof c.name === "string" && c.name.trim()
+                      ? c.name.trim()
+                      : String(c.serviceName ?? "Клас");
                   const cap = Number(c.capacity);
-                  const instructor = [c.instructorFirstName, c.instructorLastName]
+                  const instructor = [
+                    c.instructorFirstName,
+                    c.instructorLastName,
+                  ]
                     .filter(Boolean)
                     .join(" ")
                     .trim();
                   let subline = "—";
-                  if (Number.isFinite(cap) && cap > 0 && instructor) {
-                    subline =
-                      cap === 1 ? `1 място с ${instructor}` : `до ${cap} души с ${instructor}`;
-                  } else if (instructor) {
-                    subline = `с ${instructor}`;
-                  } else if (Number.isFinite(cap) && cap > 0) {
-                    subline = cap === 1 ? "1 място" : `до ${cap} души`;
+                  if (instructor) {
+                    subline = `${instructor}`;
                   }
-
+                
                   return (
                     <li key={c.id} className="schedule-card">
                       <div className="schedule-card-time">
-                        <span className="schedule-card-time-start">{formatTime(String(c.startsAt))}</span>
+                        <span className="schedule-card-time-start">
+                          {formatTime(String(c.startsAt))}
+                        </span>
                         {Number.isFinite(mins) && mins > 0 && (
-                          <span className="schedule-card-time-duration">{mins} мин</span>
+                          <span className="schedule-card-time-duration">
+                            {mins} мин
+                          </span>
                         )}
                       </div>
                       <div className="schedule-card-main">
                         <div className="schedule-card-text">
                           <span className="schedule-card-title">{title}</span>
                           <span className="schedule-card-sub">{subline}</span>
-                          {Number.isFinite(spots) && (
+                          {alreadyBooked && (
                             <span className="schedule-card-sub">
-                              {full ? "Пълен клас" : `${spots} свободни места`}
+                              Вече имате резервация за този час
                             </span>
                           )}
-                          {full && onWaitlist && (
-                            <span className="schedule-card-sub">Вече сте в чакащия лист</span>
+                          {!hasSpots && onWaitlist && !alreadyBooked && (
+                            <span className="schedule-card-sub">
+                              Вече сте в листа за чакащи
+                            </span>
                           )}
                         </div>
                         <div className="schedule-card-actions">
-                          {hasSpots ? (
-                            <button
-                              type="button"
-                              className="primary"
-                              disabled={anyBusy}
-                              onClick={() => handleAction(classId, "reserve")}
-                            >
-                              {isReserveBusy ? "…" : authenticated ? "Запази място" : "Вход — запази място"}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="waitlist"
-                              disabled={onWaitlist || anyBusy}
-                              onClick={() => handleAction(classId, "waitlist")}
-                            >
-                              {isWaitlistBusy
-                                ? "…"
-                                : onWaitlist
-                                  ? "В чакащия лист"
-                                  : authenticated
-                                    ? "Запиши в чакащ лист"
-                                    : "Вход — чакащ лист"}
-                            </button>
-                          )}
+                          <div className="schedule-card-actions-row">
+                            <ScheduleCapacityBadge
+                              capacity={cap}
+                              spotsLeft={spots}
+                            />
+                            {hasSpots || alreadyBooked ? (
+                              <button
+                                type="button"
+                                className="primary schedule-card-book-btn"
+                                disabled={
+                                  alreadyBooked || anyBusy || isReserveBusy
+                                }
+                                onClick={() =>
+                                  handleAction(classId, "reserve")
+                                }
+                              >
+                                {isReserveBusy
+                                  ? "…"
+                                  : alreadyBooked
+                                    ? "Резервирано"
+                                    : "Запази място"}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="waitlist schedule-card-book-btn"
+                                disabled={
+                                  onWaitlist || anyBusy || isWaitlistBusy
+                                }
+                                onClick={() =>
+                                  handleAction(classId, "waitlist")
+                                }
+                              >
+                                {isWaitlistBusy
+                                  ? "…"
+                                  : onWaitlist
+                                    ? "В списъка на чакащи"
+                                    : "Запази в чакащи"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -230,6 +401,45 @@ export default function SchedulePage() {
               </ul>
             </section>
           ))}
+        </div>
+      )}
+
+      {pickerOpen && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="studio-picker-title"
+        >
+          <div className="panel modal-card">
+            <h4 id="studio-picker-title">Изберете студио</h4>
+            <p className="muted">
+              Изберете локация, за да видите графика и да запазите час.
+            </p>
+            <ul className="studio-picker-list">
+              {studios.map((s) => {
+                const detail = studioDetailLine(s);
+                return (
+                  <li key={String(s.id)}>
+                    <button
+                      type="button"
+                      className="primary studio-picker-btn"
+                      onClick={() => applyStudioSelection(Number(s.id))}
+                    >
+                      <span className="studio-picker-btn-name">
+                        {String(s.name ?? "").trim()}
+                      </span>
+                      {detail ? (
+                        <span className="studio-picker-btn-detail">
+                          {detail}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       )}
     </main>

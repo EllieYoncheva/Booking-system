@@ -2,6 +2,7 @@ import * as reservationRepository from "../repositories/reservationRepository.js
 import { getPool } from "../db/pool.js";
 import { AppError, assertFound } from "../errors/AppError.js";
 import * as bookingNotificationService from "./bookingNotificationService.js";
+import { canClientCancelBeforeClass } from "../utils/cancellationPolicy.js";
 
 const ACTIVE = ["pending", "confirmed"];
 
@@ -140,19 +141,22 @@ export async function confirmReservationAdmin(reservationId) {
 /**
  * Client cancels their reservation (frees slot + waitlist promotion + notifications).
  * @param {{ reservationId: number, appUserId: number }} input
- * @returns {Promise<boolean>}
+ * @returns {Promise<{ ok: true } | { ok: false, code: string }>}
  */
 export async function cancelReservationForClient(input) {
   const resv = await reservationRepository.findReservationById(input.reservationId);
-  if (!resv) return false;
+  if (!resv) return { ok: false, code: "NOT_FOUND" };
   if (!ACTIVE.includes(resv.status) || Number(resv.userId) !== Number(input.appUserId)) {
-    return false;
+    return { ok: false, code: "NOT_FOUND" };
+  }
+  if (!canClientCancelBeforeClass(resv.classStartsAt)) {
+    return { ok: false, code: "CANCEL_TOO_LATE" };
   }
   const raw = await reservationRepository.cancelActiveReservationWithPromotion(input.reservationId, {
     userId: input.appUserId,
     asAdmin: false,
   });
-  if (!raw.ok) return false;
+  if (!raw.ok) return { ok: false, code: "NOT_FOUND" };
   const pool = getPool();
   if (pool) {
     await bookingNotificationService.afterSeatFreed(pool, {
@@ -163,5 +167,5 @@ export async function cancelReservationForClient(input) {
       classId: resv.classId,
     });
   }
-  return true;
+  return { ok: true };
 }

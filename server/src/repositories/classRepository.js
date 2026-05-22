@@ -54,6 +54,13 @@ export async function listPublicClassesWithSpots(range = {}) {
     conditions.push("c.`startsAt` <= ?");
     params.push(range.to);
   }
+  if (range.studioId != null) {
+    const studioId = Number(range.studioId);
+    if (Number.isInteger(studioId) && studioId > 0) {
+      conditions.push("c.`studioId` = ?");
+      params.push(studioId);
+    }
+  }
   const where = conditions.join(" AND ");
   const [rows] = await pool.query(
     `SELECT ${classColumns},
