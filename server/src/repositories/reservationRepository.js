@@ -56,6 +56,32 @@ export async function findReservationById(id) {
   return rows[0] ?? null;
 }
 
+const emailContextSelect = `
+  SELECT r.*,
+    c.name AS className,
+    c.startsAt AS classStartsAt,
+    DATE_ADD(c.startsAt, INTERVAL s.duration MINUTE) AS classEndsAt,
+    c.studioId AS studioId,
+    st.name AS studioName,
+    s.name AS serviceName,
+    s.duration AS serviceDuration,
+    u.email AS clientEmail,
+    u.firstName AS clientFirstName,
+    u.lastName AS clientLastName
+  FROM \`Reservations\` r
+  INNER JOIN \`Classes\` c ON c.id = r.classId
+  INNER JOIN \`Studios\` st ON st.id = c.studioId AND st.deletedAt IS NULL
+  INNER JOIN \`Services\` s ON s.id = c.serviceId AND s.deletedAt IS NULL
+  INNER JOIN \`Users\` u ON u.id = r.userId AND u.deletedAt IS NULL
+`;
+
+export async function findReservationEmailContext(id) {
+  const pool = getPool();
+  if (!pool) return null;
+  const [rows] = await pool.query(`${emailContextSelect} WHERE r.\`id\` = ? LIMIT 1`, [id]);
+  return rows[0] ?? null;
+}
+
 /**
  * @param {import("mysql2/promise").PoolConnection} conn
  * @param {number} userId

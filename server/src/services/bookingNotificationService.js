@@ -1,4 +1,5 @@
 import * as notificationRepository from "../repositories/notificationRepository.js";
+import { sendReservationConfirmedEmail } from "./reservationEmailService.js";
 
 /**
  * @param {import("mysql2/promise").PoolConnection|import("mysql2/promise").Pool} executor
@@ -45,6 +46,16 @@ export async function notifyUserReservationConfirmed(executor, userId, reservati
     reservationId,
     classId,
   });
+  try {
+    const result = await sendReservationConfirmedEmail(reservationId);
+    if (result.ok) {
+      console.info(`[email] reservation confirmed #${reservationId} sent`);
+    } else if (result.code !== "NOT_CONFIGURED") {
+      console.warn(`[email] reservation confirmed #${reservationId}: ${result.code}`);
+    }
+  } catch (err) {
+    console.error(`[email] reservation confirmed #${reservationId} failed`, err);
+  }
 }
 
 /**
