@@ -45,7 +45,11 @@ function PersonIcon() {
 
 /** @param {{ capacity: number, spotsLeft: number }} props */
 function ScheduleCapacityBadge({ capacity, spotsLeft }) {
-  if (!Number.isFinite(capacity) || capacity <= 0 || !Number.isFinite(spotsLeft)) {
+  if (
+    !Number.isFinite(capacity) ||
+    capacity <= 0 ||
+    !Number.isFinite(spotsLeft)
+  ) {
     return null;
   }
   const full = spotsLeft < 1;
@@ -65,10 +69,16 @@ function ScheduleCapacityBadge({ capacity, spotsLeft }) {
 
 /** @param {Record<string, unknown>} row */
 function instructorPhotoUrlFromRow(row) {
-  if (typeof row.instructorPhotoUrl === "string" && row.instructorPhotoUrl.trim()) {
+  if (
+    typeof row.instructorPhotoUrl === "string" &&
+    row.instructorPhotoUrl.trim()
+  ) {
     return row.instructorPhotoUrl.trim();
   }
-  if (typeof row.instructorImageUrl === "string" && row.instructorImageUrl.trim()) {
+  if (
+    typeof row.instructorImageUrl === "string" &&
+    row.instructorImageUrl.trim()
+  ) {
     return row.instructorImageUrl.trim();
   }
   return null;
@@ -91,14 +101,17 @@ export default function SchedulePage() {
   const applyStudioSelection = useCallback(
     (id) => {
       setSelectedStudioId(id);
-      try {
-        sessionStorage.setItem(STUDIO_STORAGE_KEY, String(id));
-      } catch {
-        /* ignore */
+      // Save to sessionStorage only if authenticated
+      if (authenticated) {
+        try {
+          sessionStorage.setItem(STUDIO_STORAGE_KEY, String(id));
+        } catch {
+          /* ignore */
+        }
       }
       setSearchParams({ studioId: String(id) }, { replace: true });
     },
-    [setSearchParams],
+    [setSearchParams, authenticated],
   );
 
   useEffect(() => {
@@ -110,7 +123,13 @@ export default function SchedulePage() {
         if (cancelled) return;
         const list = j.studios ?? [];
         setStudios(list);
-        setSelectedStudioId(resolveInitialStudioId(list, searchParams));
+        // For guests, always show picker (set to null)
+        // For authenticated users, load from sessionStorage/URL
+        if (authenticated) {
+          setSelectedStudioId(resolveInitialStudioId(list, searchParams));
+        } else {
+          setSelectedStudioId(null);
+        }
       })
       .catch((e) => {
         if (!cancelled) setError(e.message);
@@ -121,9 +140,9 @@ export default function SchedulePage() {
     return () => {
       cancelled = true;
     };
-    // Resolve from URL/session only on initial studio load.
+    // Show picker for guests, load stored selection for authenticated users
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getToken]);
+  }, [getToken, authenticated]);
 
   const load = useCallback(() => {
     if (selectedStudioId == null) {
@@ -165,10 +184,7 @@ export default function SchedulePage() {
     if (!studiosLoading) load();
   }, [load, studiosLoading]);
 
-  const byDate = useMemo(
-    () => groupRowsByDate(classes, "startsAt"),
-    [classes],
-  );
+  const byDate = useMemo(() => groupRowsByDate(classes, "startsAt"), [classes]);
 
   const selectedStudio = useMemo(
     () => studios.find((s) => Number(s.id) === selectedStudioId) ?? null,
@@ -200,7 +216,9 @@ export default function SchedulePage() {
       }
     }
     const confirmed =
-      action === "reserve" ? await confirmReserve() : await confirmWaitlistJoin();
+      action === "reserve"
+        ? await confirmReserve()
+        : await confirmWaitlistJoin();
     if (!confirmed) return;
 
     setBusy({ classId: Number(classId), action });
@@ -409,34 +427,51 @@ export default function SchedulePage() {
           aria-modal="true"
           aria-labelledby="studio-picker-title"
         >
-          <div className="panel modal-card">
-            <h4 id="studio-picker-title">Изберете студио</h4>
-            <p className="muted">
-              Изберете локация, за да видите графика и да запазите час.
-            </p>
-            <ul className="studio-picker-list">
-              {studios.map((s) => {
-                const detail = studioDetailLine(s);
-                return (
-                  <li key={String(s.id)}>
-                    <button
-                      type="button"
-                      className="primary studio-picker-btn"
-                      onClick={() => applyStudioSelection(Number(s.id))}
-                    >
-                      <span className="studio-picker-btn-name">
-                        {String(s.name ?? "").trim()}
-                      </span>
-                      {detail ? (
-                        <span className="studio-picker-btn-detail">
-                          {detail}
-                        </span>
-                      ) : null}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+          <div className="studio-picker-modal">
+            <div className="studio-picker-header">
+              <div className="studio-picker-icon">
+                <i className="fa-solid fa-location-dot"></i>
+              </div>
+
+              <h2 id="studio-picker-title">Избери студио</h2>
+
+              <p>Моля, избери студио, за да продължиш с резервацията.</p>
+            </div>
+
+            <div className="studio-picker-cards">
+              {studios.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="studio-card"
+                  onClick={() => applyStudioSelection(Number(s.id))}
+                >
+                  <img
+                    src={s.imageUrl || "/src/img/project Plovdiv.jpg"}
+                    alt={s.name}
+                    className="studio-card-image"
+                  />
+
+                  <div className="studio-card-content">
+                    <h3>{s.name}</h3>
+                    <p className="studio-address">{s.address}</p>
+                    <p className="studio-address">{s.city}</p>
+                  </div>
+
+                  <div className="studio-card-arrow">
+                    <i className="fa-solid fa-chevron-right"></i>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="studio-picker-cancel"
+              onClick={() => setPickerOpen(false)}
+            >
+              Откажи
+            </button>
           </div>
         </div>
       )}
