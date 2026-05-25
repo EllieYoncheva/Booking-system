@@ -56,6 +56,13 @@ export async function findReservationById(id) {
   return rows[0] ?? null;
 }
 
+export async function findReservationRecordById(id) {
+  const pool = getPool();
+  if (!pool) return null;
+  const [rows] = await pool.query("SELECT * FROM `Reservations` WHERE `id` = ? LIMIT 1", [id]);
+  return rows[0] ?? null;
+}
+
 /**
  * @param {import("mysql2/promise").PoolConnection} conn
  * @param {number} userId

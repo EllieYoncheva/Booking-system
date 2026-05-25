@@ -23,14 +23,24 @@ const FILTERS = [
   { value: "no_show", label: "Неявяване" },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "pending", label: "pending" },
+  { value: "confirmed", label: "confirmed" },
+  { value: "cancelled", label: "cancelled" },
+];
+
+function statusSelectValue(status) {
+  return status === "cancelled_by_user" || status === "cancelled_by_admin"
+    ? "cancelled"
+    : status;
+}
+
 export default function ReservationsAdminPage() {
   const { getToken } = useOutletContext();
   const [rows, setRows] = useState([]);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [busyId, setBusyId] = useState(null);
-  const [cancelModal, setCancelModal] = useState(null);
-  const [cancelReason, setCancelReason] = useState("");
 
   const load = () => {
     setError("");
@@ -46,38 +56,17 @@ export default function ReservationsAdminPage() {
     load();
   }, [getToken, status]);
 
-  const confirm = (reservationId) => {
+  const updateStatus = (reservationId, nextStatus) => {
     setBusyId(reservationId);
     setError("");
-    apiRequest(getToken, `/api/admin/reservations/${reservationId}/confirm`, { method: "POST" })
+    apiRequest(getToken, `/api/admin/reservations/${reservationId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: nextStatus }),
+    })
       .then(() => load())
       .catch((e) => setError(e.message))
       .finally(() => setBusyId(null));
   };
-
-  const openCancel = (r) => {
-    setCancelModal(r);
-    setCancelReason("");
-  };
-
-  const submitCancel = () => {
-    if (!cancelModal) return;
-    const reservationId = cancelModal.id;
-    setBusyId(reservationId);
-    setError("");
-    apiRequest(getToken, `/api/admin/reservations/${reservationId}/cancel`, {
-      method: "POST",
-      body: JSON.stringify({ reason: cancelReason.trim() || null }),
-    })
-      .then(() => {
-        setCancelModal(null);
-        return load();
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setBusyId(null));
-  };
-
-  const canAct = (s) => s === "pending" || s === "confirmed";
 
   return (
     <>
@@ -123,56 +112,26 @@ export default function ReservationsAdminPage() {
                 <td>{formatWhen(r.classStartsAt)}</td>
                 <td>{RESERVATION_STATUS_BG[r.status] ?? r.status}</td>
                 <td>
-                  {canAct(r.status) && (
-                    <div className="row-actions">
-                      {r.status === "pending" && (
-                        <button
-                          type="button"
-                          disabled={busyId === r.id}
-                          onClick={() => confirm(r.id)}
-                        >
-                          {busyId === r.id ? "…" : "Потвърди"}
-                        </button>
-                      )}
-                      <button type="button" className="danger" onClick={() => openCancel(r)}>
-                        Откажи
-                      </button>
-                    </div>
-                  )}
+                  <select
+                    value={statusSelectValue(r.status)}
+                    disabled={busyId === r.id}
+                    onChange={(e) => updateStatus(r.id, e.target.value)}
+                  >
+                    {STATUS_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && <p className="muted">Няма резервации за избрания филтър.</p>}
+        {rows.length === 0 && (
+          <p className="muted">Няма резервации за избрания филтър.</p>
+        )}
       </div>
-      {cancelModal && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
-          <div className="panel modal-card">
-            <h4 id="cancel-title">Отказ на резервация #{cancelModal.id}</h4>
-            <p className="muted">
-              {cancelModal.className} — {formatWhen(cancelModal.classStartsAt)}
-            </p>
-            <label style={{ display: "block", marginTop: "0.75rem" }}>
-              Причина (по избор)
-              <textarea
-                rows={3}
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Ще се запази като вътрешна бележка към резервацията"
-              />
-            </label>
-            <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-              <button type="button" disabled={busyId === cancelModal.id} onClick={submitCancel}>
-                {busyId === cancelModal.id ? "…" : "Потвърди отказ"}
-              </button>
-              <button type="button" onClick={() => setCancelModal(null)}>
-                Затвори
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

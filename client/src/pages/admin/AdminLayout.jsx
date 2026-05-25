@@ -25,6 +25,9 @@ export default function AdminLayout() {
         <NavLink to="/admin/classes" className={({ isActive }) => (isActive ? "active" : "")}>
           Класове
         </NavLink>
+        <NavLink to="/admin/calendar" className={({ isActive }) => (isActive ? "active" : "")}>
+          Календар
+        </NavLink>
         <NavLink to="/admin/clients" className={({ isActive }) => (isActive ? "active" : "")}>
           Клиенти
         </NavLink>

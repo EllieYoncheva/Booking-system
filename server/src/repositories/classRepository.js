@@ -33,7 +33,7 @@ const spotsSubquery = `
   LEFT JOIN (
     SELECT \`classId\`, COUNT(*) AS taken
     FROM \`Reservations\`
-    WHERE \`status\` IN ('pending', 'confirmed')
+    WHERE \`status\` IN ('pending', 'confirmed', 'pending_confirmation')
     GROUP BY \`classId\`
   ) rc ON rc.classId = c.id
 `;
@@ -104,7 +104,20 @@ export async function listAllClasses() {
   const pool = getPool();
   if (!pool) return [];
   const [rows] = await pool.query(
-    `${classSelectJoins} ORDER BY c.startsAt DESC`
+    `SELECT ${classColumns},
+      s.name AS serviceName,
+      s.duration AS serviceDuration,
+      st.name AS studioName,
+      i.firstName AS instructorFirstName,
+      i.lastName AS instructorLastName,
+      COALESCE(rc.taken, 0) AS taken,
+      (c.capacity - COALESCE(rc.taken, 0)) AS spotsLeft
+    FROM \`Classes\` c
+    INNER JOIN \`Services\` s ON s.id = c.serviceId AND s.deletedAt IS NULL
+    INNER JOIN \`Studios\` st ON st.id = c.studioId AND st.deletedAt IS NULL
+    INNER JOIN \`Instructors\` i ON i.id = c.instructorId AND i.deletedAt IS NULL
+    ${spotsSubquery}
+    ORDER BY c.startsAt DESC`
   );
   return rows;
 }
@@ -191,7 +204,7 @@ export async function lockClassById(conn, id) {
 
 export async function countReservationsForClass(conn, classId) {
   const [rows] = await conn.query(
-    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ? AND `status` IN ('pending', 'confirmed')",
+    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ? AND `status` IN ('pending', 'confirmed', 'pending_confirmation')",
     [classId]
   );
   return Number(rows[0]?.cnt ?? 0);
@@ -202,7 +215,7 @@ export async function countActiveReservationsForClass(classId) {
   const pool = getPool();
   if (!pool) return 0;
   const [rows] = await pool.query(
-    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ? AND `status` IN ('pending', 'confirmed')",
+    "SELECT COUNT(*) AS cnt FROM `Reservations` WHERE `classId` = ? AND `status` IN ('pending', 'confirmed', 'pending_confirmation')",
     [classId]
   );
   return Number(rows[0]?.cnt ?? 0);

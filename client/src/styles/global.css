@@ -937,3 +937,303 @@ button:disabled {
   justify-content: flex-end;
   margin-top: 0.25rem;
 }
+
+.week-cal {
+  --week-cal-hour-height: 96px;
+}
+
+.week-cal-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.week-cal-toolbar h3,
+.week-cal-toolbar p {
+  margin: 0;
+}
+
+.week-cal-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.week-cal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.week-cal-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.week-cal-grid {
+  display: grid;
+  grid-template-columns: 4.75rem repeat(7, minmax(9.5rem, 1fr));
+  grid-template-rows: auto var(--week-cal-body-height);
+  min-width: 860px;
+}
+
+.week-cal-corner,
+.week-cal-day-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.week-cal-corner {
+  left: 0;
+  z-index: 5;
+  border-right: 1px solid var(--border);
+}
+
+.week-cal-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border-right: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+
+.week-cal-day-head span {
+  font-weight: 700;
+}
+
+.week-cal-day-head strong {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.week-cal-time-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  grid-column: 1;
+  grid-row: 2;
+  height: var(--week-cal-body-height);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.week-cal-time-label {
+  position: absolute;
+  right: 0.7rem;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-cal-day-col {
+  position: relative;
+  height: var(--week-cal-body-height);
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 96%, var(--bg));
+}
+
+.week-cal-hour-lines {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: repeat(
+    var(--week-cal-hour-count, 14),
+    var(--week-cal-hour-height)
+  );
+  pointer-events: none;
+}
+
+.week-cal-hour-lines span {
+  border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.week-cal-event-wrap {
+  position: absolute;
+  min-height: 2rem;
+  padding: 0.12rem;
+  z-index: 1;
+}
+
+.week-cal-event-wrap:hover,
+.week-cal-event-wrap:focus-within {
+  z-index: 10;
+}
+
+.week-cal-event {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  width: 100%;
+  height: 100%;
+  min-height: 2rem;
+  overflow: hidden;
+  padding: 0.38rem 0.42rem;
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-left: 4px solid var(--accent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--schedule-card));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 8%, transparent);
+  transition:
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.week-cal-event:hover,
+.week-cal-event:focus {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--text) 16%, transparent);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.week-cal-event--cancelled {
+  border-color: color-mix(in srgb, var(--muted) 50%, var(--border));
+  border-left-color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 13%, var(--surface));
+  opacity: 0.78;
+}
+
+.week-cal-event--full:not(.week-cal-event--cancelled) {
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+  border-left-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, var(--schedule-card));
+}
+
+.week-cal-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.week-cal-event-meta,
+.week-cal-event-footer {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.week-cal-event-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.week-cal-badge {
+  position: absolute;
+  right: 0.3rem;
+  bottom: 0.3rem;
+  max-width: calc(100% - 0.6rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 0.08rem 0.35rem;
+  background: color-mix(in srgb, var(--muted) 18%, var(--surface));
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.week-cal-tooltip {
+  position: absolute;
+  left: 0.25rem;
+  top: calc(100% + 0.35rem);
+  display: none;
+  width: max-content;
+  max-width: min(22rem, 80vw);
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--text) 18%, transparent);
+  white-space: pre-line;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.week-cal-tooltip strong,
+.week-cal-tooltip span {
+  display: block;
+}
+
+.week-cal-tooltip strong {
+  margin-bottom: 0.35rem;
+}
+
+.week-cal-event-wrap:hover .week-cal-tooltip,
+.week-cal-event-wrap:focus-within .week-cal-tooltip {
+  display: block;
+}
+
+.week-cal-modal {
+  width: min(46rem, 100%);
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
+}
+
+.week-cal-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.week-cal-modal-head h4,
+.week-cal-modal-head p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .week-cal-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .week-cal-grid {
+    grid-template-columns: 4.25rem repeat(7, minmax(8rem, 1fr));
+    min-width: 720px;
+  }
+
+  .week-cal-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .week-cal-event {
+    padding: 0.32rem 0.36rem;
+  }
+
+  .week-cal-event-meta--secondary,
+  .week-cal-event-footer span:not(.week-cal-capacity) {
+    display: none;
+  }
+}

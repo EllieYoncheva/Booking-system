@@ -135,6 +135,31 @@ router.post("/reservations/:id/cancel", async (req, res, next) => {
   }
 });
 
+router.patch("/reservations/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
+
+    const status = String(req.body?.status ?? "");
+    if (!["pending", "confirmed", "cancelled"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const existing = await reservationRepository.findReservationRecordById(id);
+    if (!existing) return res.status(404).json({ error: "Reservation not found" });
+    const nextStatus = status === "cancelled" ? "cancelled_by_admin" : status;
+    const cancelledAt = status === "cancelled" ? new Date() : null;
+    const row = await reservationRepository.updateReservationStatus(id, nextStatus, cancelledAt, {
+      adminCancelReason: null,
+    });
+    res.json({ reservation: row });
+  } catch (e) {
+    if (e && e.code === "RESERVATION_NOT_FOUND") return res.status(404).json({ error: e.message });
+    if (e && e.code === "RESERVATION_NOT_ACTIVE") return res.status(400).json({ error: e.message });
+    next(e);
+  }
+});
+
 router.get("/settings/booking", async (_req, res, next) => {
   try {
     const settings = await appSettingsService.getBookingSettings();
