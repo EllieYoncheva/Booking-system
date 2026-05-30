@@ -1,6 +1,7 @@
 import { getPool } from "../db/pool.js";
 import * as classRepository from "./classRepository.js";
 import { isDuplicateKeyError } from "../utils/mysqlErrors.js";
+import * as noShowBlockingService from "../services/noShowBlockingService.js";
 
 const listSelect = `
   SELECT w.id,
@@ -159,6 +160,15 @@ export async function tryJoinWaitlist(userId, classId) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+    if (
+      await noShowBlockingService.isUserOnlineBookingBlockedInTransaction(
+        conn,
+        userId,
+      )
+    ) {
+      await conn.rollback();
+      return { ok: false, code: "USER_BOOKING_BLOCKED" };
+    }
     const cls = await classRepository.lockClassById(conn, classId);
     if (!cls) {
       await conn.rollback();

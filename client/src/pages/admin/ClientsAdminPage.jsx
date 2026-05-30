@@ -53,6 +53,7 @@ export default function ClientsAdminPage() {
               <th>Име</th>
               <th>Имейл</th>
               <th>Телефон</th>
+              <th>Статус</th>
               <th></th>
             </tr>
           </thead>
@@ -65,6 +66,10 @@ export default function ClientsAdminPage() {
                 </td>
                 <td>{c.email}</td>
                 <td>{c.phone ?? "—"}</td>
+                <td>
+                  {c.onlineBookingBlocked ? "Блокиран" : "Активен"} (
+                  {Number(c.noShowCount ?? 0)} неяв.)
+                </td>
                 <td>
                   <Link to={`/admin/clients/${c.id}`}>Профил</Link>
                 </td>

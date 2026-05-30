@@ -8,6 +8,10 @@ import {
 import { joinClassWaitlist, reserveClass } from "../utils/classBooking.js";
 import { activeBookedClassIds } from "../utils/bookingState.js";
 import {
+  isOnlineBookingBlocked,
+  ONLINE_BOOKING_BLOCKED_MESSAGE,
+} from "../utils/bookingBlock.js";
+import {
   alertAfterReserve,
   alertError,
   alertMessage,
@@ -93,6 +97,7 @@ export default function SchedulePage() {
   const [classes, setClasses] = useState([]);
   const [waitlistClassIds, setWaitlistClassIds] = useState(() => new Set());
   const [bookedClassIds, setBookedClassIds] = useState(() => new Set());
+  const [appUser, setAppUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   /** @type {[null | { classId: number, action: 'reserve' | 'waitlist' }]} */
@@ -161,6 +166,11 @@ export default function SchedulePage() {
     ];
     if (authenticated) {
       requests.push(
+        apiRequest(getToken, "/api/me").then((j) => {
+          setAppUser(j.appUser ?? null);
+        }),
+      );
+      requests.push(
         apiRequest(getToken, "/api/me/waitlist").then((j) => {
           const ids = new Set((j.waitlist ?? []).map((w) => Number(w.classId)));
           setWaitlistClassIds(ids);
@@ -174,6 +184,7 @@ export default function SchedulePage() {
     } else {
       setWaitlistClassIds(new Set());
       setBookedClassIds(new Set());
+      setAppUser(null);
     }
     return Promise.all(requests)
       .catch((e) => setError(e.message))
@@ -198,6 +209,8 @@ export default function SchedulePage() {
     keycloak.login({ redirectUri: window.location.href });
   };
 
+  const bookingBlocked = authenticated && isOnlineBookingBlocked(appUser);
+
   /**
    * @param {number|string} classId
    * @param {'reserve' | 'waitlist'} action
@@ -205,6 +218,11 @@ export default function SchedulePage() {
   const handleAction = async (classId, action) => {
     if (!authenticated) {
       requireLogin();
+      return;
+    }
+    if (bookingBlocked) {
+      setError(ONLINE_BOOKING_BLOCKED_MESSAGE);
+      alertError(ONLINE_BOOKING_BLOCKED_MESSAGE);
       return;
     }
     if (action === "reserve") {
@@ -272,6 +290,9 @@ export default function SchedulePage() {
         </div>
       )}
       <p className="muted">{subtitle}</p>
+      {bookingBlocked && (
+        <div className="error-banner">{ONLINE_BOOKING_BLOCKED_MESSAGE}</div>
+      )}
       {error && <div className="error-banner">{error}</div>}
 
       {studiosLoading ? (
@@ -322,6 +343,8 @@ export default function SchedulePage() {
                     notes.push("Вече имате резервация за този час");
                   } else if (hasSpots && !bookingAllowed) {
                     notes.push(CLIENT_BOOKING_TOO_LATE_MESSAGE);
+                  } else if (bookingBlocked) {
+                    notes.push(ONLINE_BOOKING_BLOCKED_MESSAGE);
                   } else if (!hasSpots && onWaitlist) {
                     notes.push("Вече сте в листа за чакащи");
                   }
@@ -378,6 +401,7 @@ export default function SchedulePage() {
                               className="primary schedule-card-book-btn"
                               disabled={
                                 alreadyBooked ||
+                                bookingBlocked ||
                                 !bookingAllowed ||
                                 anyBusy ||
                                 isReserveBusy
@@ -399,7 +423,12 @@ export default function SchedulePage() {
                             <button
                               type="button"
                               className="waitlist schedule-card-book-btn"
-                              disabled={onWaitlist || anyBusy || isWaitlistBusy}
+                              disabled={
+                                bookingBlocked ||
+                                onWaitlist ||
+                                anyBusy ||
+                                isWaitlistBusy
+                              }
                               onClick={() => handleAction(classId, "waitlist")}
                             >
                               {isWaitlistBusy

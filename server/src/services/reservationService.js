@@ -3,6 +3,8 @@ import { getPool } from "../db/pool.js";
 import { AppError, assertFound } from "../errors/AppError.js";
 import * as bookingNotificationService from "./bookingNotificationService.js";
 import { canClientCancelBeforeClass } from "../utils/cancellationPolicy.js";
+import { USER_BOOKING_BLOCKED_MESSAGE } from "../utils/noShowPolicy.js";
+import * as noShowBlockingService from "./noShowBlockingService.js";
 
 const ACTIVE = ["pending", "confirmed"];
 
@@ -35,6 +37,7 @@ export async function createReservation(input) {
       CLASS_CANCELLED: ["Class is cancelled", 409, "CLASS_CANCELLED"],
       CLASS_ALREADY_STARTED: ["Class has already started", 400, "CLASS_ALREADY_STARTED"],
       BOOKING_TOO_LATE: ["Booking window closed", 409, "BOOKING_TOO_LATE"],
+      USER_BOOKING_BLOCKED: [USER_BOOKING_BLOCKED_MESSAGE, 403, "USER_BOOKING_BLOCKED"],
       ALREADY_BOOKED: ["You already have an active booking for this class", 409, "DUPLICATE_BOOKING"],
       ALREADY_ON_WAITLIST: ["You are already on the waitlist for this class", 409, "ALREADY_ON_WAITLIST"],
     };
@@ -112,7 +115,11 @@ export async function cancelReservation(input) {
 export async function patchReservationStatusAdmin(input) {
   const resv = await reservationRepository.findReservationById(input.reservationId);
   assertFound(resv, "Reservation not found", "RESERVATION_NOT_FOUND");
-  return reservationRepository.updateReservationStatus(resv.id, input.status, resv.cancelledAt, {});
+  const row = await reservationRepository.updateReservationStatus(resv.id, input.status, resv.cancelledAt, {});
+  if (input.status === "no_show") {
+    await noShowBlockingService.syncAutoBlockForUser(Number(resv.userId));
+  }
+  return row;
 }
 
 /**

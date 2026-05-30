@@ -5,6 +5,7 @@ import * as userService from "../services/userService.js";
 import * as reservationService from "../services/reservationService.js";
 import * as reservationRepository from "../repositories/reservationRepository.js";
 import * as appSettingsService from "../services/appSettingsService.js";
+import * as noShowBlockingService from "../services/noShowBlockingService.js";
 
 const router = Router();
 
@@ -23,7 +24,7 @@ router.get("/clients", async (req, res, next) => {
     const { limit, offset } = parseLimitOffset(req.query);
     const search = typeof req.query.search === "string" ? req.query.search : undefined;
     const rows = await userService.listClientsForAdmin({ limit, offset, search });
-    res.json({ clients: rows });
+    res.json({ clients: await noShowBlockingService.enrichUsersWithNoShowCount(rows) });
   } catch (e) {
     next(e);
   }
@@ -34,7 +35,7 @@ router.get("/clients/:id", async (req, res, next) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
     const client = await userService.getClientForAdmin(id);
-    res.json({ client });
+    res.json({ client: await noShowBlockingService.enrichUserWithNoShowCount(client) });
   } catch (e) {
     if (e && e.code === "USER_NOT_FOUND") return res.status(404).json({ error: e.message });
     next(e);
@@ -46,7 +47,7 @@ router.patch("/clients/:id", async (req, res, next) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
     const row = await userService.updateClientForAdmin(id, req.body ?? {});
-    res.json({ client: row });
+    res.json({ client: await noShowBlockingService.enrichUserWithNoShowCount(row) });
   } catch (e) {
     if (e && (e.code === "USER_NOT_FOUND" || e.code === "VALIDATION")) {
       return res.status(e.code === "USER_NOT_FOUND" ? 404 : 400).json({ error: e.message });
@@ -135,13 +136,39 @@ router.post("/reservations/:id/cancel", async (req, res, next) => {
   }
 });
 
+router.post("/clients/:id/block-online-booking", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
+    await userService.getClientForAdmin(id);
+    const client = await noShowBlockingService.blockClientOnlineBooking(id, "admin_manual");
+    res.json({ client });
+  } catch (e) {
+    if (e && e.code === "USER_NOT_FOUND") return res.status(404).json({ error: e.message });
+    next(e);
+  }
+});
+
+router.post("/clients/:id/unblock-online-booking", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
+    await userService.getClientForAdmin(id);
+    const client = await noShowBlockingService.unblockClientOnlineBooking(id);
+    res.json({ client });
+  } catch (e) {
+    if (e && e.code === "USER_NOT_FOUND") return res.status(404).json({ error: e.message });
+    next(e);
+  }
+});
+
 router.patch("/reservations/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: "Invalid id" });
 
     const status = String(req.body?.status ?? "");
-    if (!["pending", "confirmed", "cancelled"].includes(status)) {
+    if (!["pending", "confirmed", "cancelled", "no_show"].includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
     }
 
@@ -152,6 +179,9 @@ router.patch("/reservations/:id", async (req, res, next) => {
     const row = await reservationRepository.updateReservationStatus(id, nextStatus, cancelledAt, {
       adminCancelReason: null,
     });
+    if (nextStatus === "no_show") {
+      await noShowBlockingService.syncAutoBlockForUser(Number(existing.userId));
+    }
     res.json({ reservation: row });
   } catch (e) {
     if (e && e.code === "RESERVATION_NOT_FOUND") return res.status(404).json({ error: e.message });

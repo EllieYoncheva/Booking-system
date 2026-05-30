@@ -20,12 +20,13 @@ const FILTERS = [
   { value: "confirmed", label: "Потвърдени" },
   { value: "cancelled_by_user", label: "Анулирани от клиент" },
   { value: "cancelled_by_admin", label: "Анулирани от админ" },
-  { value: "no_show", label: "Неявяване" },
+  { value: "no_show", label: "Неявил се" },
 ];
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "pending" },
   { value: "confirmed", label: "confirmed" },
+  { value: "no_show", label: "no show" },
   { value: "cancelled", label: "cancelled" },
 ];
 
@@ -105,7 +106,9 @@ export default function ReservationsAdminPage() {
                     {r.clientFirstName} {r.clientLastName}
                   </div>
                   <div className="muted small">
-                    <Link to={`/admin/clients/${r.userId}`}>{r.clientEmail}</Link>
+                    <Link to={`/admin/clients/${r.userId}`}>
+                      {r.clientEmail}
+                    </Link>
                   </div>
                 </td>
                 <td>{r.className ?? "—"}</td>

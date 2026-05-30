@@ -36,6 +36,9 @@
  * @property {Date|string|null} deletedAt
  * @property {string|null} notes admin-editable client notes
  * @property {string|null} internalNotes staff-only notes
+ * @property {boolean|0|1} onlineBookingBlocked
+ * @property {Date|string|null} bookingBlockedAt
+ * @property {'auto_no_show'|'admin_manual'|null} bookingBlockedSource
  */
 
 /**

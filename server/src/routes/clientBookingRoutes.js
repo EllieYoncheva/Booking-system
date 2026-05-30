@@ -10,6 +10,7 @@ import { getPool } from "../db/pool.js";
 import * as bookingNotificationService from "../services/bookingNotificationService.js";
 import { CLIENT_BOOKING_TOO_LATE_MESSAGE } from "../utils/bookingPolicy.js";
 import { CLIENT_CANCEL_TOO_LATE_MESSAGE } from "../utils/cancellationPolicy.js";
+import { USER_BOOKING_BLOCKED_MESSAGE } from "../utils/noShowPolicy.js";
 
 const router = Router();
 
@@ -70,6 +71,7 @@ router.post("/classes/:classId/reservations", async (req, res, next) => {
         CLASS_CANCELLED: { status: 409, error: "Класът е отменен" },
         CLASS_ALREADY_STARTED: { status: 409, error: "Класът вече е започнал" },
         BOOKING_TOO_LATE: { status: 409, error: CLIENT_BOOKING_TOO_LATE_MESSAGE },
+        USER_BOOKING_BLOCKED: { status: 403, error: USER_BOOKING_BLOCKED_MESSAGE },
         CLASS_FULL: { status: 409, error: "Няма свободни места" },
         ALREADY_BOOKED: { status: 409, error: "Вече имате резервация за този клас" },
       };
@@ -103,6 +105,7 @@ router.post("/classes/:classId/waitlist", async (req, res, next) => {
         CLASS_NOT_FOUND: { status: 404, error: "Класът не е намерен" },
         CLASS_CANCELLED: { status: 409, error: "Класът е отменен" },
         CLASS_ALREADY_STARTED: { status: 409, error: "Класът вече е започнал" },
+        USER_BOOKING_BLOCKED: { status: 403, error: USER_BOOKING_BLOCKED_MESSAGE },
         CLASS_HAS_SPOTS: { status: 409, error: "Има свободни места — използвайте „Запази“" },
         ALREADY_BOOKED: { status: 409, error: "Вече имате резервация за този клас" },
         ALREADY_ON_WAITLIST: { status: 409, error: "Вече сте в списъка за чакане за този клас" },

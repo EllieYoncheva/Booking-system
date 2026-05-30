@@ -8,6 +8,10 @@ import {
 import { joinClassWaitlist, reserveClass } from "../utils/classBooking.js";
 import { activeBookedClassIds } from "../utils/bookingState.js";
 import {
+  isOnlineBookingBlocked,
+  ONLINE_BOOKING_BLOCKED_MESSAGE,
+} from "../utils/bookingBlock.js";
+import {
   canClientCancelBeforeClass,
   CLIENT_CANCEL_TOO_LATE_MESSAGE,
 } from "../utils/cancellationPolicy.js";
@@ -71,6 +75,7 @@ export default function MyBookingsPage() {
   const [rows, setRows] = useState([]);
   const [waitlistRows, setWaitlistRows] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [appUser, setAppUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(null);
@@ -130,6 +135,11 @@ export default function MyBookingsPage() {
 
     if (authenticated) {
       requests.push(
+        apiRequest(getToken, "/api/me").then((j) => {
+          setAppUser(j.appUser ?? null);
+        }),
+      );
+      requests.push(
         apiRequest(getToken, "/api/me/reservations").then((j) =>
           setRows(j.reservations ?? []),
         ),
@@ -142,6 +152,7 @@ export default function MyBookingsPage() {
     } else {
       setRows([]);
       setWaitlistRows([]);
+      setAppUser(null);
     }
 
     if (selectedClassId) {
@@ -229,6 +240,7 @@ export default function MyBookingsPage() {
   };
 
   const login = () => keycloak.login({ redirectUri: window.location.href });
+  const bookingBlocked = authenticated && isOnlineBookingBlocked(appUser);
 
   const leaveWaitlist = (classId) => {
     if (!authenticated) {
@@ -249,6 +261,11 @@ export default function MyBookingsPage() {
       return;
     }
     if (!selectedClass) return;
+    if (bookingBlocked) {
+      setError(ONLINE_BOOKING_BLOCKED_MESSAGE);
+      alertError(ONLINE_BOOKING_BLOCKED_MESSAGE);
+      return;
+    }
     const spots = Number(selectedClass.spotsLeft);
     const hasSpots = Number.isFinite(spots) && spots >= 1;
     if (action === "reserve" && !hasSpots) return;
@@ -342,6 +359,9 @@ export default function MyBookingsPage() {
         </div>
       )}
       <p className="muted">{subtitle}</p>
+      {bookingBlocked && (
+        <div className="error-banner">{ONLINE_BOOKING_BLOCKED_MESSAGE}</div>
+      )}
       {error && <div className="error-banner">{error}</div>}
       {studiosLoading || loading ? (
         <p>Зареждане…</p>
@@ -365,6 +385,7 @@ export default function MyBookingsPage() {
                       !selectedBookingAllowed
                         ? [CLIENT_BOOKING_TOO_LATE_MESSAGE]
                         : []),
+                      ...(bookingBlocked ? [ONLINE_BOOKING_BLOCKED_MESSAGE] : []),
                     ]}
                     footer={
                       <>
@@ -378,6 +399,7 @@ export default function MyBookingsPage() {
                             className="primary schedule-card-book-btn"
                             disabled={
                               selectedAlreadyBooked ||
+                              bookingBlocked ||
                               !selectedBookingAllowed ||
                               bookingAction != null
                             }
@@ -401,7 +423,9 @@ export default function MyBookingsPage() {
                             type="button"
                             className="waitlist schedule-card-book-btn"
                             disabled={
-                              selectedOnWaitlist || bookingAction != null
+                              selectedOnWaitlist ||
+                              bookingAction != null ||
+                              bookingBlocked
                             }
                             onClick={() =>
                               handleSelectedClassAction("waitlist")

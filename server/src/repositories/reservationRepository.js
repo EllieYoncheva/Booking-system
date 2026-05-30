@@ -4,6 +4,8 @@ import * as waitlistRepository from "./waitlistRepository.js";
 import { getNewReservationStatus } from "../services/appSettingsService.js";
 import { canClientBookBeforeClass } from "../utils/bookingPolicy.js";
 import { isDuplicateKeyError } from "../utils/mysqlErrors.js";
+import * as noShowBlockingService from "../services/noShowBlockingService.js";
+import { AppError } from "../errors/AppError.js";
 
 const listSelect = `
   SELECT r.*,
@@ -179,6 +181,15 @@ export async function promoteFromWaitlistLocked(conn, classId, initialStatus) {
     if (taken >= cap) break;
     const next = await waitlistRepository.pickNextWaitingForUpdate(conn, classId);
     if (!next) break;
+    if (
+      await noShowBlockingService.isUserOnlineBookingBlockedInTransaction(
+        conn,
+        Number(next.userId),
+      )
+    ) {
+      await waitlistRepository.markWaitlistRemovedById(conn, Number(next.id));
+      continue;
+    }
     try {
       const reservationId = await insertReservation(conn, Number(next.userId), classId, initialStatus);
       await waitlistRepository.deleteWaitlistRowById(conn, Number(next.id));
@@ -210,6 +221,15 @@ export async function bookClassSpot(userId, classId) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+    if (
+      await noShowBlockingService.isUserOnlineBookingBlockedInTransaction(
+        conn,
+        userId,
+      )
+    ) {
+      await conn.rollback();
+      return { ok: false, code: "USER_BOOKING_BLOCKED" };
+    }
     const cls = await classRepository.lockClassById(conn, classId);
     if (!cls) {
       await conn.rollback();
@@ -274,6 +294,15 @@ export async function bookConfirmedOrJoinWaitlist(userId, classId) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+    if (
+      await noShowBlockingService.isUserOnlineBookingBlockedInTransaction(
+        conn,
+        userId,
+      )
+    ) {
+      await conn.rollback();
+      return { ok: false, code: "USER_BOOKING_BLOCKED" };
+    }
     const cls = await classRepository.lockClassById(conn, classId);
     if (!cls) {
       await conn.rollback();
@@ -448,6 +477,27 @@ export async function cancelReservationByUser(reservationId, userId) {
 export async function updateReservationStatus(id, status, cancelledAt, extra = {}) {
   const pool = getPool();
   if (!pool) throw new Error("Database not configured");
+  if (["pending", "confirmed"].includes(status)) {
+    const [conflicts] = await pool.query(
+      `SELECT other.\`id\`
+       FROM \`Reservations\` current
+       INNER JOIN \`Reservations\` other
+         ON other.\`userId\` = current.\`userId\`
+        AND other.\`classId\` = current.\`classId\`
+        AND other.\`id\` <> current.\`id\`
+        AND other.\`status\` IN ('pending', 'confirmed')
+       WHERE current.\`id\` = ?
+       LIMIT 1`,
+      [id],
+    );
+    if (conflicts.length > 0) {
+      throw new AppError(
+        "Потребителят вече има активна резервация за този клас.",
+        409,
+        "DUPLICATE_ACTIVE_RESERVATION",
+      );
+    }
+  }
   const sets = ["`status` = ?"];
   const vals = [status];
   if (cancelledAt !== undefined) {
@@ -459,6 +509,17 @@ export async function updateReservationStatus(id, status, cancelledAt, extra = {
     vals.push(extra.adminCancelReason);
   }
   vals.push(id);
-  await pool.query(`UPDATE \`Reservations\` SET ${sets.join(", ")} WHERE \`id\` = ?`, vals);
+  try {
+    await pool.query(`UPDATE \`Reservations\` SET ${sets.join(", ")} WHERE \`id\` = ?`, vals);
+  } catch (err) {
+    if (isDuplicateKeyError(err)) {
+      throw new AppError(
+        "Потребителят вече има активна резервация за този клас.",
+        409,
+        "DUPLICATE_ACTIVE_RESERVATION",
+      );
+    }
+    throw err;
+  }
   return findReservationById(id);
 }

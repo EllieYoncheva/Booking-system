@@ -4,5 +4,5 @@ export const RESERVATION_STATUS_BG = {
   confirmed: "Потвърдена",
   cancelled_by_user: "Анулирана от клиента",
   cancelled_by_admin: "Анулирана от администратор",
-  no_show: "Неявяване",
+  no_show: "Неявил се",
 };

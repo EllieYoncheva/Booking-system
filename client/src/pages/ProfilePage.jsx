@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
+import { ONLINE_BOOKING_BLOCKED_MESSAGE } from "../utils/bookingBlock.js";
 
 export default function ProfilePage() {
   const { getToken } = useOutletContext();
@@ -9,6 +10,7 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
+  const [appUser, setAppUser] = useState(null);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -22,6 +24,7 @@ export default function ProfilePage() {
     apiRequest(getToken, "/api/me")
       .then((j) => {
         const u = j.appUser;
+        setAppUser(u ?? null);
         setAccountEmail(u?.email ?? j.email ?? "");
         setForm({
           firstName: u?.firstName ?? "",
@@ -48,6 +51,7 @@ export default function ProfilePage() {
     })
       .then((j) => {
         const u = j.appUser;
+        setAppUser(u ?? null);
         setForm({
           firstName: u?.firstName ?? "",
           lastName: u?.lastName ?? "",
@@ -67,6 +71,9 @@ export default function ProfilePage() {
       </p>
       {error && <div className="error-banner">{error}</div>}
       {ok && <p className="ok-banner">{ok}</p>}
+      {appUser?.onlineBookingBlocked && (
+        <div className="error-banner">{ONLINE_BOOKING_BLOCKED_MESSAGE}</div>
+      )}
       {loading ? (
         <p>Зареждане…</p>
       ) : (
@@ -82,6 +89,19 @@ export default function ProfilePage() {
                     Имейл (само за преглед)
                   </span>
                   <input type="email" readOnly value={accountEmail} />
+                </label>
+                <label className="profile-field profile-field--full">
+                  <span className="profile-field-label">
+                    Онлайн резервации
+                  </span>
+                  <input
+                    readOnly
+                    value={
+                      appUser?.onlineBookingBlocked
+                        ? `Блокиран (${Number(appUser?.noShowCount ?? 0)} неяв.)`
+                        : `Активен (${Number(appUser?.noShowCount ?? 0)} неяв.)`
+                    }
+                  />
                 </label>
                 <label className="profile-field">
                   <span className="profile-field-label">Име *</span>

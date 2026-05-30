@@ -21,6 +21,7 @@ export default function ClientDetailAdminPage() {
   const [reservations, setReservations] = useState([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [blockingAction, setBlockingAction] = useState("");
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -50,9 +51,10 @@ export default function ClientDetailAdminPage() {
           internalNotes: c.internalNotes ?? "",
         });
       }),
-      apiRequest(getToken, `/api/admin/clients/${cid}/reservations?limit=100`).then((j) =>
-        setReservations(j.reservations ?? [])
-      ),
+      apiRequest(
+        getToken,
+        `/api/admin/clients/${cid}/reservations?limit=100`,
+      ).then((j) => setReservations(j.reservations ?? [])),
     ]).catch((e) => setError(e.message));
   };
 
@@ -74,6 +76,24 @@ export default function ClientDetailAdminPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setSaving(false));
+  };
+
+  const updateBookingBlock = (blocked) => {
+    if (!client) return;
+    const message = blocked
+      ? "Блокирай клиента за онлайн резервации?"
+      : "Разблокирай клиента за онлайн резервации?";
+    if (!window.confirm(message)) return;
+    setBlockingAction(blocked ? "block" : "unblock");
+    setError("");
+    const cid = Number(id);
+    const action = blocked ? "block-online-booking" : "unblock-online-booking";
+    apiRequest(getToken, `/api/admin/clients/${cid}/${action}`, {
+      method: "POST",
+    })
+      .then((j) => setClient(j.client))
+      .catch((err) => setError(err.message))
+      .finally(() => setBlockingAction(""));
   };
 
   if (!client && !error) {
@@ -98,7 +118,9 @@ export default function ClientDetailAdminPage() {
               <input
                 required
                 value={form.firstName}
-                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, firstName: e.target.value }))
+                }
               />
             </label>
             <label>
@@ -106,7 +128,9 @@ export default function ClientDetailAdminPage() {
               <input
                 required
                 value={form.lastName}
-                onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, lastName: e.target.value }))
+                }
               />
             </label>
             <label style={{ gridColumn: "1 / -1" }}>
@@ -115,14 +139,18 @@ export default function ClientDetailAdminPage() {
                 type="email"
                 required
                 value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
               />
             </label>
             <label style={{ gridColumn: "1 / -1" }}>
               Телефон
               <input
                 value={form.phone}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
               />
             </label>
             <label style={{ gridColumn: "1 / -1" }}>
@@ -130,7 +158,9 @@ export default function ClientDetailAdminPage() {
               <textarea
                 rows={3}
                 value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, notes: e.target.value }))
+                }
               />
             </label>
             <label style={{ gridColumn: "1 / -1" }}>
@@ -138,13 +168,54 @@ export default function ClientDetailAdminPage() {
               <textarea
                 rows={4}
                 value={form.internalNotes}
-                onChange={(e) => setForm((f) => ({ ...f, internalNotes: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, internalNotes: e.target.value }))
+                }
               />
             </label>
             <button type="submit" disabled={saving}>
               {saving ? "Запис…" : "Запази промените"}
             </button>
           </form>
+        </div>
+      )}
+      {client && (
+        <div className="panel" style={{ marginTop: "1rem" }}>
+          <h4>Онлайн резервации</h4>
+          <p>
+            Статус:{" "}
+            <strong>
+              {client.onlineBookingBlocked ? "Блокиран" : "Активен"}
+            </strong>
+          </p>
+          <p className="muted">
+            Неявявания: {Number(client.noShowCount ?? 0)} · Източник:{" "}
+            {client.bookingBlockedSource === "auto_no_show"
+              ? "автоматично при неявявания"
+              : client.bookingBlockedSource === "admin_manual"
+                ? "ръчно от администратор"
+                : "—"}
+          </p>
+
+          <button
+            type="button"
+            className="danger"
+            disabled={client.onlineBookingBlocked || blockingAction !== ""}
+            onClick={() => updateBookingBlock(true)}
+          >
+            {blockingAction === "block"
+              ? "Блокиране…"
+              : "Блокирай за онлайн резервации"}
+          </button>
+          <button
+            type="button"
+            disabled={!client.onlineBookingBlocked || blockingAction !== ""}
+            onClick={() => updateBookingBlock(false)}
+          >
+            {blockingAction === "unblock"
+              ? "Разблокиране…"
+              : "Разблокирай за онлайн резервации"}
+          </button>
         </div>
       )}
       <div className="panel table-wrap" style={{ marginTop: "1rem" }}>

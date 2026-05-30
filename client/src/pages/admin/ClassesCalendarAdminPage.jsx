@@ -15,6 +15,7 @@ const ACTIVE_RESERVATION_STATUSES = new Set([
 const MODAL_STATUSES = [
   { value: "pending", label: "pending" },
   { value: "confirmed", label: "confirmed" },
+  { value: "no_show", label: "no show" },
   { value: "cancelled", label: "cancelled" },
 ];
 

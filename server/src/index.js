@@ -16,10 +16,12 @@ import { ensureAppUser } from "./services/userSyncService.js";
 import * as userService from "./services/userService.js";
 import { AppError } from "./errors/AppError.js";
 import * as waitlistRepository from "./repositories/waitlistRepository.js";
+import * as noShowBlockingService from "./services/noShowBlockingService.js";
 
-function userForApiResponse(user) {
+async function userForApiResponse(user) {
   if (!user) return user;
-  const { passwordHash: _p, internalNotes: _i, ...rest } = user;
+  const enriched = await noShowBlockingService.enrichUserWithNoShowCount(user);
+  const { passwordHash: _p, internalNotes: _i, ...rest } = enriched;
   return rest;
 }
 
@@ -49,7 +51,7 @@ async function createApp() {
         preferredUsername: req.user.preferredUsername,
         email: req.user.email,
         roles: req.user.roles,
-        appUser: userForApiResponse(appUser),
+        appUser: await userForApiResponse(appUser),
       });
     } catch (err) {
       next(err);
@@ -64,7 +66,7 @@ async function createApp() {
         preferredUsername: req.user.preferredUsername,
         email: req.user.email,
         roles: req.user.roles,
-        appUser: userForApiResponse(appUser),
+        appUser: await userForApiResponse(appUser),
       });
     } catch (err) {
       if (err instanceof AppError) {
