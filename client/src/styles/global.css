@@ -393,6 +393,316 @@ button:disabled {
 }
 
 /* —— Client schedule (grouped by day) —— */
+.schedule-filter-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  margin: 0.9rem 0 1rem;
+  padding: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 62%, var(--schedule-card));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.schedule-date-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(2.9rem, 1fr));
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.schedule-date-arrow,
+.schedule-date-chip,
+.schedule-date-picker,
+.schedule-filter-toggle {
+  border-radius: 8px;
+  border-color: transparent;
+  background: transparent;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.schedule-date-arrow {
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.schedule-date-chip {
+  display: flex;
+  min-width: 0;
+  min-height: 3.1rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  padding: 0.35rem 0.25rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.schedule-date-chip span,
+.schedule-date-picker span,
+.schedule-filter-toggle span:first-child {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.schedule-date-chip strong {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.05;
+}
+
+.schedule-date-chip.is-active {
+  background: color-mix(in srgb, var(--text) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--border) 85%, var(--surface));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--text);
+}
+
+.schedule-date-chip.is-active strong {
+  color: var(--muted);
+}
+
+.schedule-date-arrow:hover,
+.schedule-date-chip:hover,
+.schedule-date-picker:hover,
+.schedule-filter-toggle:hover {
+  background: color-mix(in srgb, var(--text) 5%, var(--surface));
+}
+
+.schedule-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.schedule-filter-field--instructor {
+  width: 100%;
+}
+
+.schedule-filter-field span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.schedule-date-picker-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.schedule-date-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.8rem;
+  padding: 0 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.schedule-date-picker::before {
+  content: "▦";
+  margin-right: 0.45rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.schedule-date-picker-input {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.schedule-filter-field input,
+.schedule-filter-field select {
+  width: 100%;
+  min-height: 2.35rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 78%, var(--bg));
+  border-color: color-mix(in srgb, var(--border) 88%, var(--surface));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.schedule-filter-field input:focus,
+.schedule-filter-field select:focus {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+  outline: 2px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  outline-offset: 1px;
+}
+
+.schedule-filter-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.schedule-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.8rem;
+  padding: 0 0.9rem;
+  color: var(--text);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.schedule-filter-toggle-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-top: 0.04rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.schedule-filter-toggle.is-active {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.schedule-filter-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  z-index: 5;
+  width: min(16rem, calc(100vw - 2.5rem));
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+@media (max-width: 720px) {
+  .schedule-filter-bar {
+    display: grid;
+    grid-template-columns: 2.35rem minmax(0, 1fr) 2.35rem;
+    align-items: center;
+  }
+
+  .schedule-filter-bar > .schedule-date-arrow:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .schedule-date-strip {
+    grid-column: 2;
+    grid-row: 1;
+    grid-template-columns: repeat(7, minmax(2.8rem, 1fr));
+  }
+
+  .schedule-filter-bar > .schedule-date-arrow:nth-of-type(2) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .schedule-date-picker-wrap {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    min-width: 0;
+  }
+
+  .schedule-filter-menu {
+    grid-column: 3;
+    grid-row: 2;
+    min-width: 6.5rem;
+  }
+
+  .schedule-filter-panel {
+    width: min(16rem, calc(100vw - 2rem));
+  }
+}
+
+@media (max-width: 560px) {
+  .schedule-filter-bar {
+    grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr) 2.25rem;
+    padding-bottom: 0.55rem;
+  }
+
+  .schedule-filter-bar > .schedule-date-arrow:first-child {
+    grid-column: 1;
+  }
+
+  .schedule-filter-bar > .schedule-date-arrow:nth-of-type(2) {
+    grid-column: 4;
+  }
+
+  .schedule-date-strip {
+    grid-column: 2 / 4;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .schedule-date-chip:nth-child(n + 6) {
+    display: none;
+  }
+
+  .schedule-date-arrow {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .schedule-date-chip {
+    min-height: 2.95rem;
+  }
+
+  .schedule-date-picker-wrap {
+    grid-column: 1 / 3;
+    grid-row: 2;
+  }
+
+  .schedule-filter-menu {
+    grid-column: 3 / 5;
+    grid-row: 2;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .schedule-filter-bar {
+    grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr) 2.25rem;
+  }
+
+  .schedule-date-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .schedule-date-chip:nth-child(n + 4) {
+    display: none;
+  }
+
+  .schedule-date-chip {
+    min-height: 2.8rem;
+  }
+}
+
 .page--schedule {
   max-width: 720px;
 }
@@ -423,6 +733,10 @@ button:disabled {
 
 .schedule-day + .schedule-day {
   margin-top: 1.75rem;
+}
+
+.schedule-day {
+  scroll-margin-top: 1rem;
 }
 
 .schedule-day-heading {

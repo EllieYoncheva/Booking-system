@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
 import {
@@ -88,9 +88,34 @@ function instructorPhotoUrlFromRow(row) {
   return null;
 }
 
+function dateFromKey(key) {
+  return new Date(`${key}T00:00:00`);
+}
+
+function dateKeyFromDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function addDays(key, days) {
+  const date = dateFromKey(key);
+  date.setDate(date.getDate() + days);
+  return dateKeyFromDate(date);
+}
+
+function formatDateStripDay(key, todayKey) {
+  if (key === todayKey) return "Днес";
+  return dateFromKey(key)
+    .toLocaleDateString("bg-BG", { weekday: "short" })
+    .replace(".", "");
+}
+
 export default function SchedulePage() {
   const { authenticated, getToken, keycloak } = useOutletContext();
   const [searchParams, setSearchParams] = useSearchParams();
+  const todayKey = useMemo(() => dateKeyFromDate(new Date()), []);
   const [studios, setStudios] = useState([]);
   const [studiosLoading, setStudiosLoading] = useState(true);
   const [selectedStudioId, setSelectedStudioId] = useState(null);
@@ -100,6 +125,12 @@ export default function SchedulePage() {
   const [appUser, setAppUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [dateFilter, setDateFilter] = useState(todayKey);
+  const [dateWindowStart, setDateWindowStart] = useState(todayKey);
+  const [instructorFilter, setInstructorFilter] = useState("");
+  const [instructorPanelOpen, setInstructorPanelOpen] = useState(false);
+  const dateInputRef = useRef(null);
+  const instructorMenuRef = useRef(null);
   /** @type {[null | { classId: number, action: 'reserve' | 'waitlist' }]} */
   const [busy, setBusy] = useState(null);
 
@@ -195,7 +226,63 @@ export default function SchedulePage() {
     if (!studiosLoading) load();
   }, [load, studiosLoading]);
 
-  const byDate = useMemo(() => groupRowsByDate(classes, "startsAt"), [classes]);
+  useEffect(() => {
+    if (!instructorPanelOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!instructorMenuRef.current?.contains(event.target)) {
+        setInstructorPanelOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [instructorPanelOpen]);
+
+  const instructorOptions = useMemo(() => {
+    const map = new Map();
+    for (const row of classes) {
+      const id = Number(row.instructorId);
+      const name = instructorNameFromRow(row);
+      if (Number.isInteger(id) && id > 0 && name) {
+        map.set(id, name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "bg"));
+  }, [classes]);
+
+  const filteredClasses = useMemo(
+    () =>
+      classes.filter((row) => {
+        if (instructorFilter && String(row.instructorId) !== instructorFilter) {
+          return false;
+        }
+        return true;
+      }),
+    [classes, instructorFilter],
+  );
+
+  const dateStripDays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, index) => {
+        const key = addDays(dateWindowStart, index);
+        return {
+          key,
+          day: formatDateStripDay(key, todayKey),
+          date: dateFromKey(key).getDate(),
+        };
+      }),
+    [dateWindowStart, todayKey],
+  );
+
+  const byDate = useMemo(
+    () => groupRowsByDate(filteredClasses, "startsAt"),
+    [filteredClasses],
+  );
 
   const selectedStudio = useMemo(
     () => studios.find((s) => Number(s.id) === selectedStudioId) ?? null,
@@ -210,6 +297,23 @@ export default function SchedulePage() {
   };
 
   const bookingBlocked = authenticated && isOnlineBookingBlocked(appUser);
+
+  const scrollToDate = useCallback((dateKey) => {
+    window.requestAnimationFrame(() => {
+      const section = document.getElementById(`schedule-day-${dateKey}`);
+      section?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
+  const openDatePicker = () => {
+    const input = dateInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+    input.click();
+  };
 
   /**
    * @param {number|string} classId
@@ -295,6 +399,116 @@ export default function SchedulePage() {
       )}
       {error && <div className="error-banner">{error}</div>}
 
+      {!studiosLoading && selectedStudioId != null && classes.length > 0 && (
+        <div className="schedule-filter-bar" aria-label="Филтри за графика">
+          <button
+            type="button"
+            className="schedule-date-arrow"
+            aria-label="Предишни дати"
+            onClick={() =>
+              setDateWindowStart((current) => addDays(current, -7))
+            }
+          >
+            ‹
+          </button>
+          <div className="schedule-date-strip" aria-label="Дата">
+            {dateStripDays.map((day) => (
+              <button
+                key={day.key}
+                type="button"
+                className={`schedule-date-chip${
+                  day.key === dateFilter ? " is-active" : ""
+                }`}
+                onClick={() => {
+                  setDateFilter(day.key);
+                  scrollToDate(day.key);
+                }}
+              >
+                <span>{day.day}</span>
+                <strong>{day.date}</strong>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="schedule-date-arrow"
+            aria-label="Следващи дати"
+            onClick={() => setDateWindowStart((current) => addDays(current, 7))}
+          >
+            ›
+          </button>
+          <div className="schedule-date-picker-wrap">
+            <button
+              type="button"
+              className="schedule-date-picker"
+              onClick={openDatePicker}
+            >
+              <span>Избери Дата</span>
+            </button>
+            <input
+              ref={dateInputRef}
+              className="schedule-date-picker-input"
+              id="schedule-date-filter"
+              type="date"
+              value={dateFilter}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setDateFilter(e.target.value);
+                setDateWindowStart(e.target.value);
+                scrollToDate(e.target.value);
+              }}
+            />
+          </div>
+          <div className="schedule-filter-menu" ref={instructorMenuRef}>
+            <button
+              type="button"
+              className={`schedule-filter-toggle${
+                instructorFilter ? " is-active" : ""
+              }`}
+              aria-expanded={instructorPanelOpen}
+              aria-controls="schedule-instructor-filter-panel"
+              onClick={() => setInstructorPanelOpen((open) => !open)}
+            >
+              <span>Филтри</span>
+              <span
+                className="schedule-filter-toggle-chevron"
+                aria-hidden="true"
+              >
+                ❯
+              </span>
+            </button>
+            {instructorPanelOpen && (
+              <div
+                id="schedule-instructor-filter-panel"
+                className="schedule-filter-panel"
+              >
+                <label
+                  className="schedule-filter-field schedule-filter-field--instructor"
+                  htmlFor="schedule-instructor-filter"
+                >
+                  <span>Инструктор</span>
+                  <select
+                    id="schedule-instructor-filter"
+                    value={instructorFilter}
+                    onChange={(e) => setInstructorFilter(e.target.value)}
+                  >
+                    <option value="">Всички инструктори</option>
+                    {instructorOptions.map((instructor) => (
+                      <option
+                        key={String(instructor.id)}
+                        value={String(instructor.id)}
+                      >
+                        {instructor.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {studiosLoading ? (
         <p>Зареждане…</p>
       ) : studios.length === 0 ? (
@@ -309,11 +523,16 @@ export default function SchedulePage() {
           Няма предстоящи класове за това студио. Добавете данни от админ панела
           или стартирайте seed скрипта.
         </p>
+      ) : filteredClasses.length === 0 ? (
+        <p className="muted">
+          Няма класове, които отговарят на избраните филтри.
+        </p>
       ) : (
         <div className="schedule-by-day">
           {byDate.map(([dateKey, dayClasses]) => (
             <section
               key={dateKey}
+              id={`schedule-day-${dateKey}`}
               className="schedule-day"
               aria-labelledby={`schedule-heading-${dateKey}`}
             >
