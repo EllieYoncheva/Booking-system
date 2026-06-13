@@ -4,6 +4,7 @@ import { AppError, assertFound } from "../errors/AppError.js";
 import * as bookingNotificationService from "./bookingNotificationService.js";
 import { canClientCancelBeforeClass } from "../utils/cancellationPolicy.js";
 import { USER_BOOKING_BLOCKED_MESSAGE } from "../utils/noShowPolicy.js";
+import { MAX_ACTIVE_RESERVATIONS_MESSAGE } from "../utils/activeReservationPolicy.js";
 import * as noShowBlockingService from "./noShowBlockingService.js";
 
 const ACTIVE = ["pending", "confirmed"];
@@ -40,6 +41,11 @@ export async function createReservation(input) {
       USER_BOOKING_BLOCKED: [USER_BOOKING_BLOCKED_MESSAGE, 403, "USER_BOOKING_BLOCKED"],
       ALREADY_BOOKED: ["You already have an active booking for this class", 409, "DUPLICATE_BOOKING"],
       ALREADY_ON_WAITLIST: ["You are already on the waitlist for this class", 409, "ALREADY_ON_WAITLIST"],
+      ACTIVE_RESERVATION_LIMIT: [
+        MAX_ACTIVE_RESERVATIONS_MESSAGE,
+        409,
+        "ACTIVE_RESERVATION_LIMIT",
+      ],
     };
     const m = map[r.code];
     if (m) throw new AppError(m[0], m[1], m[2]);

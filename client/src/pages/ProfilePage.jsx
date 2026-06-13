@@ -90,19 +90,6 @@ export default function ProfilePage() {
                   </span>
                   <input type="email" readOnly value={accountEmail} />
                 </label>
-                <label className="profile-field profile-field--full">
-                  <span className="profile-field-label">
-                    Онлайн резервации
-                  </span>
-                  <input
-                    readOnly
-                    value={
-                      appUser?.onlineBookingBlocked
-                        ? `Блокиран (${Number(appUser?.noShowCount ?? 0)} неяв.)`
-                        : `Активен (${Number(appUser?.noShowCount ?? 0)} неяв.)`
-                    }
-                  />
-                </label>
                 <label className="profile-field">
                   <span className="profile-field-label">Име *</span>
                   <input

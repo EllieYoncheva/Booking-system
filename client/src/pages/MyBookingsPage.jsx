@@ -12,6 +12,10 @@ import {
   ONLINE_BOOKING_BLOCKED_MESSAGE,
 } from "../utils/bookingBlock.js";
 import {
+  hasReachedActiveReservationLimit,
+  MAX_ACTIVE_RESERVATIONS_MESSAGE,
+} from "../utils/activeReservationLimit.js";
+import {
   canClientCancelBeforeClass,
   CLIENT_CANCEL_TOO_LATE_MESSAGE,
 } from "../utils/cancellationPolicy.js";
@@ -285,6 +289,11 @@ export default function MyBookingsPage() {
     ) {
       setError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
       alertError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
+      return;
+    }
+
+    if (action === "reserve" && hasReachedActiveReservationLimit(rows)) {
+      setError(MAX_ACTIVE_RESERVATIONS_MESSAGE);
       return;
     }
 

@@ -10,6 +10,7 @@ import { getPool } from "../db/pool.js";
 import * as bookingNotificationService from "../services/bookingNotificationService.js";
 import { CLIENT_BOOKING_TOO_LATE_MESSAGE } from "../utils/bookingPolicy.js";
 import { CLIENT_CANCEL_TOO_LATE_MESSAGE } from "../utils/cancellationPolicy.js";
+import { MAX_ACTIVE_RESERVATIONS_MESSAGE } from "../utils/activeReservationPolicy.js";
 import { USER_BOOKING_BLOCKED_MESSAGE } from "../utils/noShowPolicy.js";
 
 const router = Router();
@@ -74,6 +75,10 @@ router.post("/classes/:classId/reservations", async (req, res, next) => {
         USER_BOOKING_BLOCKED: { status: 403, error: USER_BOOKING_BLOCKED_MESSAGE },
         CLASS_FULL: { status: 409, error: "Няма свободни места" },
         ALREADY_BOOKED: { status: 409, error: "Вече имате резервация за този клас" },
+        ACTIVE_RESERVATION_LIMIT: {
+          status: 409,
+          error: MAX_ACTIVE_RESERVATIONS_MESSAGE,
+        },
       };
       const m = map[result.code] ?? { status: 409, error: "Резервацията не е възможна" };
       return res.status(m.status).json({ error: m.error, code: result.code });

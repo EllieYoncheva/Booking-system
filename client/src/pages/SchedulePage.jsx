@@ -13,6 +13,10 @@ import {
   ONLINE_BOOKING_BLOCKED_MESSAGE,
 } from "../utils/bookingBlock.js";
 import {
+  hasReachedActiveReservationLimit,
+  MAX_ACTIVE_RESERVATIONS_MESSAGE,
+} from "../utils/activeReservationLimit.js";
+import {
   alertAfterReserve,
   alertError,
   alertMessage,
@@ -137,6 +141,7 @@ export default function SchedulePage() {
   const [classes, setClasses] = useState([]);
   const [waitlistClassIds, setWaitlistClassIds] = useState(() => new Set());
   const [bookedClassIds, setBookedClassIds] = useState(() => new Set());
+  const [reservations, setReservations] = useState([]);
   const [appUser, setAppUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -200,6 +205,7 @@ export default function SchedulePage() {
       setClasses([]);
       setWaitlistClassIds(new Set());
       setBookedClassIds(new Set());
+      setReservations([]);
       setLoading(false);
       return Promise.resolve();
     }
@@ -224,12 +230,15 @@ export default function SchedulePage() {
       );
       requests.push(
         apiRequest(getToken, "/api/me/reservations").then((j) => {
-          setBookedClassIds(activeBookedClassIds(j.reservations ?? []));
+          const list = j.reservations ?? [];
+          setReservations(list);
+          setBookedClassIds(activeBookedClassIds(list));
         }),
       );
     } else {
       setWaitlistClassIds(new Set());
       setBookedClassIds(new Set());
+      setReservations([]);
       setAppUser(null);
     }
     return Promise.all(requests)
@@ -377,6 +386,10 @@ export default function SchedulePage() {
       if (cls && !canClientBookBeforeClass(cls.startsAt)) {
         setError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
         alertError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
+        return;
+      }
+      if (hasReachedActiveReservationLimit(reservations)) {
+        setError(MAX_ACTIVE_RESERVATIONS_MESSAGE);
         return;
       }
     }

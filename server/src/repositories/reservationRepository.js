@@ -3,9 +3,15 @@ import * as classRepository from "./classRepository.js";
 import * as waitlistRepository from "./waitlistRepository.js";
 import { getNewReservationStatus } from "../services/appSettingsService.js";
 import { canClientBookBeforeClass } from "../utils/bookingPolicy.js";
+import {
+  ACTIVE_RESERVATION_STATUSES,
+  MAX_ACTIVE_RESERVATIONS,
+} from "../utils/activeReservationPolicy.js";
 import { isDuplicateKeyError } from "../utils/mysqlErrors.js";
 import * as noShowBlockingService from "../services/noShowBlockingService.js";
 import { AppError } from "../errors/AppError.js";
+
+const ACTIVE_RESERVATION_STATUS_SQL = ACTIVE_RESERVATION_STATUSES.map((s) => `'${s}'`).join(", ");
 
 const listSelect = `
   SELECT r.*,
@@ -49,6 +55,23 @@ export async function listReservationsByUserId(userId) {
     [userId]
   );
   return rows;
+}
+
+/**
+ * @param {import("mysql2/promise").PoolConnection} conn
+ * @param {number} userId
+ */
+export async function countActiveReservationsForUser(conn, userId) {
+  const [rows] = await conn.query(
+    `SELECT COUNT(*) AS cnt
+     FROM \`Reservations\` r
+     INNER JOIN \`Classes\` c ON c.id = r.classId
+     WHERE r.\`userId\` = ?
+       AND r.\`status\` IN (${ACTIVE_RESERVATION_STATUS_SQL})
+       AND c.\`startsAt\` >= NOW(6)`,
+    [userId]
+  );
+  return Number(rows[0]?.cnt ?? 0);
 }
 
 export async function findReservationById(id) {
@@ -247,6 +270,12 @@ export async function bookClassSpot(userId, classId) {
     if (!canClientBookBeforeClass(cls.startsAt)) {
       await conn.rollback();
       return { ok: false, code: "BOOKING_TOO_LATE" };
+    }
+
+    const activeCount = await countActiveReservationsForUser(conn, userId);
+    if (activeCount >= MAX_ACTIVE_RESERVATIONS) {
+      await conn.rollback();
+      return { ok: false, code: "ACTIVE_RESERVATION_LIMIT" };
     }
 
     const taken = await classRepository.countReservationsForClass(conn, classId);
