@@ -1,22 +1,41 @@
-import { useAuth } from "./context/KeycloakContext.jsx";
+import { Navigate, Route, Routes } from "react-router-dom";
+import Layout from "./components/Layout.jsx";
+import SchedulePage from "./pages/SchedulePage.jsx";
+import MyBookingsPage from "./pages/MyBookingsPage.jsx";
+import AdminLayout from "./pages/admin/AdminLayout.jsx";
+import StudiosAdminPage from "./pages/admin/StudiosAdminPage.jsx";
+import ServicesAdminPage from "./pages/admin/ServicesAdminPage.jsx";
+import InstructorsAdminPage from "./pages/admin/InstructorsAdminPage.jsx";
+import ClassesAdminPage from "./pages/admin/ClassesAdminPage.jsx";
+import ClassesCalendarAdminPage from "./pages/admin/ClassesCalendarAdminPage.jsx";
+import ClientsAdminPage from "./pages/admin/ClientsAdminPage.jsx";
+import ClientDetailAdminPage from "./pages/admin/ClientDetailAdminPage.jsx";
+import ReservationsAdminPage from "./pages/admin/ReservationsAdminPage.jsx";
+import BookingSettingsAdminPage from "./pages/admin/BookingSettingsAdminPage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 
 export default function App() {
-  const { keycloak, userRoles, hasRole } = useAuth();
-
   return (
-    <main style={{ fontFamily: "system-ui", padding: "1.5rem", maxWidth: 640 }}>
-      <h1>Пилатес студио</h1>
-      <p>
-        Влязъл като:{" "}
-        <strong>{keycloak.tokenParsed?.preferred_username ?? keycloak.subject}</strong>
-      </p>
-      <p>Роли: {userRoles.length ? userRoles.join(", ") : "няма"}</p>
-      {hasRole("admin") && (
-        <p style={{ color: "green" }}>Имате администраторски достъп.</p>
-      )}
-      <button type="button" onClick={() => keycloak.logout()}>
-        Изход
-      </button>
-    </main>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Navigate to="/schedule" replace />} />
+        <Route path="schedule" element={<SchedulePage />} />
+        <Route path="bookings" element={<MyBookingsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="studios" replace />} />
+          <Route path="studios" element={<StudiosAdminPage />} />
+          <Route path="services" element={<ServicesAdminPage />} />
+          <Route path="instructors" element={<InstructorsAdminPage />} />
+          <Route path="classes" element={<ClassesAdminPage />} />
+          <Route path="calendar" element={<ClassesCalendarAdminPage />} />
+          <Route path="clients" element={<ClientsAdminPage />} />
+          <Route path="clients/:id" element={<ClientDetailAdminPage />} />
+          <Route path="reservations" element={<ReservationsAdminPage />} />
+          <Route path="booking-settings" element={<BookingSettingsAdminPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/schedule" replace />} />
+    </Routes>
   );
 }

@@ -52,8 +52,9 @@ export function verifyKeycloakJwt(required = true) {
           sub: decoded.sub,
           preferredUsername: decoded.preferred_username,
           email: decoded.email,
+          givenName: decoded.given_name,
+          familyName: decoded.family_name,
           roles,
-          authorities: roles.map((r) => `ROLE_${r}`),
           token,
         };
         next();

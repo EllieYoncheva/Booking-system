@@ -18,5 +18,6 @@ export const scheduledClassColumns = Object.freeze({
   serviceId: "serviceId",
   studioId: "studioId",
   instructorId: "instructorId",
+  scheduleId: "scheduleId",
   cancellationReason: "cancellationReason",
 });

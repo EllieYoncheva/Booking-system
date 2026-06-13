@@ -14,4 +14,6 @@ export const reservationColumns = Object.freeze({
   status: "status",
   userId: "userId",
   classId: "classId",
+  adminCancelReason: "adminCancelReason",
+  cancelReason: "cancelReason",
 });

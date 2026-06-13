@@ -15,6 +15,7 @@ export {
   scheduledClassTable,
   scheduledClassColumns,
 } from "./ScheduledClass.js";
+export { scheduleTable, scheduleColumns } from "./Schedule.js";
 export { reservationTable, reservationColumns } from "./Reservation.js";
 export { waitlistTable, waitlistColumns } from "./Waitlist.js";
 export {

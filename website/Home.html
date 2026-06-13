@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pilates Room – Пловдив</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --cream: #f7f1e9;
+        --warm-white: #f9f0eb;
+        --sand: #e8ddd0;
+        --taupe: #ceb79e;
+        --brown: #7f7161;
+        --dark-brown: #3d2e24;
+        --accent: #ce6857;
+        --text: #2c1f14;
+        --text-light: #7f7161;
+        --shadow: rgba(61, 43, 31, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Montserrat Alternates", sans-serif;
+        background: var(--warm-white);
+        color: var(--text);
+        overflow-x: hidden;
+      }
+
+      /* ── NAV ── */
+      nav {
+        position: fixed;
+        width: 100%;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 48px;
+        background: var(--warm-white);
+        border-bottom: 1px solid var(--sand);
+      }
+
+      .nav-logo {
+        display: flex;
+        align-items: center;
+      }
+
+      .nav-logo-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--dark-brown);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cream);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 36px;
+        list-style: none;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: var(--text-light);
+        font-size: 13px;
+        font-weight: 400;
+        transition: color 0.2s;
+      }
+      .nav-links a:hover {
+        color: var(--accent);
+      }
+
+      /* ── HERO ── */
+      .hero {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          #2c1f14 0%,
+          #5c3d28 40%,
+          #8b6f47 70%,
+          #c4b49a 100%
+        );
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 0 24px;
+        animation: fadeUp 1s ease both;
+      }
+
+      .hero-eyebrow {
+        font-family: "DM Sans", sans-serif;
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--taupe);
+        margin-bottom: 20px;
+      }
+
+      .hero-title {
+        font-family: "Montserrat Alternates", sans-serif;
+        font-size: 96px;
+        font-weight: 300;
+        color: var(--cream);
+        margin-bottom: 24px;
+      }
+
+      .hero-title em {
+        font-style: italic;
+        color: var(--taupe);
+      }
+
+      .hero-subtitle {
+        font-size: 15px;
+        font-weight: 300;
+        color: var(--cream);
+        margin-bottom: 44px;
+      }
+
+      .btn-primary {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--cream);
+        text-decoration: none;
+        padding: 14px 36px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 500;
+        transition:
+          background 0.2s,
+          transform 0.15s,
+          box-shadow 0.2s;
+        box-shadow: 0 4px 24px rgba(181, 132, 90, 0.35);
+      }
+      .btn-primary:hover {
+        background: var(--brown);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(181, 132, 90, 0.4);
+      }
+
+      /* ── SECTION COMMONS ── */
+      section {
+        padding: 100px 48px;
+      }
+
+      .section-label {
+        font-size: 10px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 12px;
+        font-weight: 500;
+      }
+
+      .section-title {
+        font-size: 48px;
+        font-weight: 300;
+        color: var(--dark-brown);
+      }
+
+      /* ── TEAM ── */
+      .team {
+        background: var(--warm-white);
+      }
+
+      .team-inner {
+        max-width: 960px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .team-header {
+        margin-bottom: 64px;
+      }
+
+      .team-grid {
+        display: flex;
+        gap: 50px;
+        justify-content: center;
+      }
+
+      .team-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        object-fit: cover;
+        background: var(--sand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: var(--taupe);
+      }
+
+      .team-name {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--dark-brown);
+        margin-bottom: 6px;
+      }
+
+      .team-role {
+        font-size: 12px;
+        color: var(--text-light);
+        line-height: 1.6;
+      }
+
+      .btn-secondary {
+        display: inline-block;
+        margin-top: 48px;
+        border: 1.5px solid var(--accent);
+        color: var(--accent);
+        text-decoration: none;
+        padding: 12px 32px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 500;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .btn-secondary:hover {
+        background: var(--accent);
+        color: var(--cream);
+      }
+
+      /* ── SCHEDULE ── */
+      .schedule {
+        background: var(--taupe);
+      }
+
+      .schedule-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .schedule-header {
+        margin-bottom: 48px;
+      }
+
+      .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--warm-white);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 40px var(--shadow);
+      }
+
+      .schedule-table thead tr {
+        background: var(--dark-brown);
+      }
+
+      .schedule-table th {
+        padding: 18px 16px;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--taupe);
+        font-weight: 500;
+        text-align: center;
+      }
+      .schedule-table th:last-child {
+        border-right: none;
+      }
+
+      .schedule-table td {
+        padding: 14px 12px;
+        border-right: 1px solid var(--sand);
+        border-bottom: 1px solid var(--sand);
+        text-align: center;
+        vertical-align: top;
+        font-size: 12px;
+      }
+      .schedule-table td:last-child {
+        border-right: none;
+      }
+      .schedule-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .slot {
+        background: var(--cream);
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        display: inline-block;
+        width: 100%;
+      }
+
+      .slot-time {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--dark-brown);
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .slot-class {
+        font-size: 11px;
+        color: var(--accent);
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .slot-instructor {
+        font-size: 10px;
+        color: var(--text-light);
+      }
+
+      .empty-slot {
+        color: var(--sand);
+        font-size: 18px;
+        padding: 20px;
+      }
+
+      /* ── REVIEWS ── */
+      .reviews {
+        background: var(--warm-white);
+        padding: 100px 48px;
+      }
+
+      .reviews-inner {
+        max-width: 1060px;
+        margin: 0 auto;
+      }
+
+      .reviews-header {
+        text-align: center;
+        margin-bottom: 56px;
+      }
+
+      .section-label {
+        font-size: 10px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 12px;
+        font-weight: 500;
+        display: block;
+      }
+
+      .section-title {
+        font-size: clamp(28px, 4vw, 44px);
+        font-weight: 300;
+        color: var(--dark-brown);
+        line-height: 1.2;
+      }
+
+      .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 44px;
+      }
+
+      .review-card {
+        background: var(--warm-white);
+        border: 2px solid var(--dark-brown);
+        border-radius: 20px;
+        padding: 28px;
+        transition:
+          transform 0.3s,
+          box-shadow 0.3s;
+      }
+
+      .review-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 48px var(--shadow);
+      }
+
+      .review-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .review-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--taupe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--cream);
+        flex-shrink: 0;
+      }
+
+      .review-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--dark-brown);
+      }
+      .review-stars {
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+
+      .review-text {
+        font-size: 13px;
+        line-height: 1.75;
+        color: var(--text-light);
+      }
+
+      .btn-secondary {
+        display: inline-block;
+        margin-top: 48px;
+        border: 1.5px solid var(--accent);
+        color: var(--accent);
+        text-decoration: none;
+        padding: 12px 32px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 500;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .btn-secondary:hover {
+        background: var(--accent);
+        color: var(--cream);
+      }
+
+      .reviews-cta {
+        text-align: center;
+      }
+
+      /* ── EQUIPMENT BANNER ── */
+      .equipment-banner {
+        background: var(--dark-brown);
+        padding: 80px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 40px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .equipment-banner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 30px,
+          rgba(196, 180, 154, 0.04) 30px,
+          rgba(196, 180, 154, 0.04) 31px
+        );
+      }
+
+      .equipment-text {
+        position: relative;
+        z-index: 1;
+      }
+
+      .equipment-text .section-label {
+        color: var(--taupe);
+      }
+
+      .equipment-text .section-title {
+        color: var(--cream);
+        font-size: clamp(32px, 4vw, 48px);
+        font-family: "Montserrat Alternates", sans-serif;
+        margin-bottom: 28px;
+      }
+
+      .btn-outline-light {
+        display: inline-block;
+        border: 1.5px solid var(--taupe);
+        color: var(--taupe);
+        text-decoration: none;
+        padding: 13px 32px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 500;
+        transition:
+          background 0.2s,
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .btn-outline-light:hover {
+        background: var(--taupe);
+        color: var(--dark-brown);
+      }
+
+      /* ── CONTACT ── */
+      .contact {
+        background: var(--cream);
+      }
+
+      .contact-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: start;
+      }
+
+      .contact-header {
+        margin-bottom: 36px;
+      }
+
+      .contact-items {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .contact-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .contact-label {
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--taupe);
+        margin-bottom: 3px;
+      }
+
+      .contact-value {
+        font-size: 14px;
+        color: var(--dark-brown);
+        font-weight: 400;
+        text-decoration: none;
+      }
+
+      a.contact-value:hover {
+        color: var(--accent);
+      }
+
+      .map-placeholder {
+        background: var(--sand);
+        border-radius: 20px;
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(196, 180, 154, 0.4);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .map-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--taupe) 1px, transparent 1px),
+          linear-gradient(90deg, var(--taupe) 1px, transparent 1px);
+        background-size: 30px 30px;
+        opacity: 0.15;
+      }
+
+      .map-pin {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        color: var(--accent);
+      }
+
+      .map-pin-dot {
+        width: 20px;
+        height: 20px;
+        background: var(--accent);
+        border-radius: 50%;
+        border: 3px solid var(--cream);
+        box-shadow: 0 0 0 4px rgba(181, 132, 90, 0.2);
+      }
+
+      .map-pin-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--dark-brown);
+        background: var(--warm-white);
+        padding: 4px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+        box-shadow: 0 2px 10px var(--shadow);
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        background: var(--dark-brown);
+        padding: 64px 48px 32px;
+        color: var(--taupe);
+      }
+
+      .footer-top {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 48px;
+        padding-bottom: 40px;
+        border-bottom: 1px solid rgba(196, 180, 154, 0.15);
+        margin-bottom: 24px;
+      }
+
+      .footer-col-title {
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: rgba(196, 180, 154, 0.5);
+        margin-bottom: 18px;
+        font-weight: 500;
+      }
+
+      .footer-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .footer-links a {
+        text-decoration: none;
+        color: var(--taupe);
+        font-size: 13px;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: var(--cream);
+      }
+
+      .footer-contact-line {
+        font-size: 13px;
+        margin-bottom: 6px;
+        line-height: 1.6;
+      }
+
+      .footer-social {
+        display: flex;
+        gap: 12px;
+        margin-top: 4px;
+      }
+
+      .footer-social-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid rgba(196, 180, 154, 0.25);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--taupe);
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          color 0.2s,
+          background 0.2s;
+      }
+      .footer-social-btn:hover {
+        border-color: var(--taupe);
+        color: var(--cream);
+        background: rgba(196, 180, 154, 0.1);
+      }
+
+      .footer-bottom {
+        text-align: center;
+        font-size: 11px;
+        color: rgba(196, 180, 154, 0.4);
+        letter-spacing: 0.5px;
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        50% {
+          transform: translateX(-50%) translateY(6px);
+        }
+      }
+
+      .fade-in {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s ease;
+      }
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 900px) {
+        nav {
+          padding: 16px 24px;
+        }
+        .nav-links {
+          display: none;
+        }
+        section {
+          padding: 72px 24px;
+        }
+
+        .reviews-grid {
+          grid-template-columns: 1fr;
+        }
+        .contact-inner {
+          grid-template-columns: 1fr;
+        }
+        .equipment-banner {
+          flex-direction: column;
+        }
+
+        .footer-top {
+          grid-template-columns: 1fr 1fr;
+        }
+        .hero-title {
+          font-size: 56px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAV -->
+
+    <nav>
+      <div class="nav-logo">
+        <div class="nav-logo-icon">PR</div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="Home.html">Начало</a></li>
+        <li><a href="Team.html">Екип</a></li>
+        <li><a href="Prices.html">Цени</a></li>
+        <li><a href="Equipment.html">Пилатес оборудване</a></li>
+        <li><a href="Contacts.html">Контакти</a></li>
+      </ul>
+      <a href="http://localhost:3001/schedule" class="btn-primary">Запази час</a>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">Студио за пилатес · Пловдив</p>
+        <h1 class="hero-title">Pilates<br /><em>Room</em></h1>
+        <p class="hero-subtitle">Твоето място за баланс и сила в Пловдив</p>
+        <a href="#contact" class="btn-primary">Запази час</a>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="team" id="team">
+      <div class="team-inner">
+        <div class="team-header fade-in">
+          <p class="section-label">Нашите специалисти</p>
+          <h2 class="section-title">Нашият екип</h2>
+        </div>
+        <div class="team-grid">
+          <div>
+            <div class="team-avatar">П</div>
+            <h3 class="team-name">Поли Василева</h3>
+            <p class="team-role">
+              Професионален инструктор<br />Кондиционен треньор
+            </p>
+          </div>
+          <div>
+            <div class="team-avatar">Е</div>
+            <h3 class="team-name">Ема</h3>
+            <p class="team-role">Професионален инструктор</p>
+          </div>
+        </div>
+        <div style="text-align: center">
+          <a href="#" class="btn-secondary">Виж повече</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="schedule" id="schedule">
+      <div class="schedule-inner">
+        <div class="schedule-header fade-in">
+          <p class="section-label">Седмична програма</p>
+          <h2 class="section-title">График</h2>
+        </div>
+        <div class="fade-in" style="overflow-x: auto">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Понеделник</th>
+                <th>Вторник</th>
+                <th>Сряда</th>
+                <th>Четвъртък</th>
+                <th>Петък</th>
+                <th>Събота</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">10:30 – 11:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td class="empty-slot">–</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td class="empty-slot">–</td>
+              </tr>
+              <tr>
+                <td class="empty-slot">–</td>
+                <td class="empty-slot">–</td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">08:30 – 09:30</span>
+                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td class="empty-slot">–</td>
+                <td class="empty-slot">–</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVIEWS -->
+    <section class="reviews">
+      <div class="reviews-inner">
+        <div class="reviews-header fade-in">
+          <span class="section-label">Клиентски отзиви</span>
+          <h2 class="section-title">Какво мислят хората за нас</h2>
+        </div>
+        <div class="reviews-grid">
+          <div class="review-card fade-in">
+            <div class="review-top">
+              <div class="review-avatar">Е</div>
+              <div class="review-meta">
+                <div class="review-name">Ема</div>
+                <div class="review-stars">★★★★★</div>
+              </div>
+            </div>
+            <p class="review-text">
+              Студиото предлага спокойна атмосфера, професионални инструктори и
+              добре структурирани тренировки, които наистина помагат за
+              подобряване на стойката, гъвкавостта и тонуса.
+            </p>
+          </div>
+          <div class="review-card fade-in">
+            <div class="review-top">
+              <div class="review-avatar">Е</div>
+              <div class="review-meta">
+                <div class="review-name">Ема</div>
+                <div class="review-stars">★★★★★</div>
+              </div>
+            </div>
+            <p class="review-text">
+              Студиото предлага спокойна атмосфера, професионални инструктори и
+              добре структурирани тренировки, които наистина помагат за
+              подобряване на стойката, гъвкавостта и тонуса.
+            </p>
+          </div>
+          <div class="review-card fade-in">
+            <div class="review-top">
+              <div class="review-avatar">Е</div>
+              <div class="review-meta">
+                <div class="review-name">Ема</div>
+                <div class="review-stars">★★★★★</div>
+              </div>
+            </div>
+            <p class="review-text">
+              Студиото предлага спокойна атмосфера, професионални инструктори и
+              добре структурирани тренировки, които наистина помагат за
+              подобряване на стойката, гъвкавостта и тонуса.
+            </p>
+          </div>
+        </div>
+        <div class="reviews-cta">
+          <a href="#" class="btn-secondary">Остави коментар</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- EQUIPMENT BANNER -->
+    <div class="equipment-banner" id="equipment">
+      <div class="equipment-text fade-in">
+        <p class="section-label">Каталог</p>
+        <h2 class="section-title">Професионално<br />пилатес оборудване</h2>
+        <a href="#" class="btn-outline-light" style="margin-top: 8px"
+          >Разгледай каталога</a
+        >
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <section class="contact" id="contact">
+      <div class="contact-inner">
+        <div>
+          <div class="contact-header fade-in">
+            <p class="section-label">Локация & Контакт</p>
+            <h2 class="section-title">Свържете се с нас</h2>
+            <p
+              style="
+                margin-top: 16px;
+                font-size: 14px;
+                color: var(--text-light);
+                line-height: 1.7;
+              "
+            >
+              Ще се радваме да се чуем! Свържете се с нас за записване, въпроси
+              или индивидуална консултация.
+            </p>
+          </div>
+          <div class="contact-items fade-in">
+            <div class="contact-item">
+              <span>📍</span>
+              <div>
+                <div class="contact-label">Адрес</div>
+                <span class="contact-value"
+                  >ул. Ж.Кюри 18, ет.3, офис 7,8, Пловдив</span
+                >
+              </div>
+            </div>
+            <div class="contact-item">
+              <span>📞</span>
+              <div>
+                <div class="contact-label">Телефон</div>
+                <a href="tel:+359887307201" class="contact-value"
+                  >+359 887 307 201</a
+                >
+              </div>
+            </div>
+            <div class="contact-item">
+              <span>✉️</span>
+              <div>
+                <div class="contact-label">Имейл</div>
+                <a
+                  href="mailto:pilatesroomplovdiv@gmail.com"
+                  class="contact-value"
+                  >pilatesroomplovdiv@gmail.com</a
+                >
+              </div>
+            </div>
+            <div class="contact-item">
+              <span>🕐</span>
+              <div>
+                <div class="contact-label">Работно време</div>
+                <span class="contact-value"
+                  >Понеделник – Събота: по описания график</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="map-placeholder fade-in">
+          <div class="map-grid"></div>
+          <div class="map-pin">
+            <div class="map-pin-dot"></div>
+            <div class="map-pin-label">Pilates Room Пловдив</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-top">
+        <div>
+          <div class="footer-col-title">Страници</div>
+          <ul class="footer-links">
+            <li><a href="#home">Начало</a></li>
+            <li><a href="#team">Екип</a></li>
+            <li><a href="#schedule">Цени</a></li>
+            <li><a href="#equipment">Пилатес оборудване</a></li>
+            <li><a href="#contact">Контакти</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-col-title">Контакти</div>
+          <p class="footer-contact-line">
+            ул. Ж.Кюри 18, ет.3, офис 7,8, Пловдив
+          </p>
+          <p class="footer-contact-line">+359 887 307 201</p>
+          <p class="footer-contact-line">pilatesroomplovdiv@gmail.com</p>
+        </div>
+        <div>
+          <div class="footer-col-title">Свържете се с нас</div>
+          <div class="footer-social">
+            <a href="#" class="footer-social-btn" aria-label="Facebook">f</a>
+            <a href="#" class="footer-social-btn" aria-label="Instagram">◎</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        Copyright © 2026 Студио Пилатес | Powered by PilatesRoom
+      </div>
+    </footer>
+
+    <script>
+      // Intersection Observer for fade-in animations
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("visible");
+              // stagger children
+              e.target.querySelectorAll &&
+                e.target.querySelectorAll(".fade-in").forEach((el, i) => {
+                  el.style.transitionDelay = i * 0.1 + "s";
+                  el.classList.add("visible");
+                });
+            }
+          });
+        },
+        { threshold: 0.15 },
+      );
+
+      document
+        .querySelectorAll(".fade-in")
+        .forEach((el) => observer.observe(el));
+    </script>
+  </body>
+</html>

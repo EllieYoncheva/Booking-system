@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import keycloak, { initKeycloakOnce } from "../config/keycloak";
 
 const AuthContext = createContext(null);
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     let cancelled = false;
 
     initKeycloakOnce({
-      onLoad: "login-required",
+      onLoad: "check-sso",
       checkLoginIframe: false,
       pkceMethod: "S256",
     })
@@ -29,9 +29,14 @@ export const AuthProvider = ({ children }) => {
         const extractedRoles = keycloak.tokenParsed?.realm_access?.roles ?? [];
         setUserRoles(extractedRoles);
 
-        refreshTimer.current = setInterval(() => {
-          keycloak.updateToken(70).catch(() => keycloak.login());
-        }, 60000);
+        if (auth) {
+          refreshTimer.current = setInterval(() => {
+            keycloak.updateToken(70).catch(() => {
+              setAuthenticated(false);
+              setUserRoles([]);
+            });
+          }, 60000);
+        }
 
         setKeycloakReady(true);
       })
@@ -58,13 +63,25 @@ export const AuthProvider = ({ children }) => {
     );
   };
 
+  const getToken = useCallback(async () => {
+    if (!keycloak.authenticated) return undefined;
+    try {
+      await keycloak.updateToken(30);
+      return keycloak.token;
+    } catch {
+      setAuthenticated(false);
+      setUserRoles([]);
+      return undefined;
+    }
+  }, []);
+
   if (!keycloakReady) {
     return <div>Зареждане на автентикация…</div>;
   }
 
   return (
     <AuthContext.Provider
-      value={{ keycloak, authenticated, userRoles, hasRole }}
+      value={{ keycloak, authenticated, userRoles, hasRole, getToken }}
     >
       {children}
     </AuthContext.Provider>

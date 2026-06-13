@@ -10,9 +10,11 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `Subscription`;
+DROP TABLE IF EXISTS `AppSettings`;
 DROP TABLE IF EXISTS `Notifications`;
 DROP TABLE IF EXISTS `Waitlist`;
 DROP TABLE IF EXISTS `Reservations`;
+DROP TABLE IF EXISTS `Schedules`;
 DROP TABLE IF EXISTS `Classes`;
 DROP TABLE IF EXISTS `Instructors`;
 DROP TABLE IF EXISTS `Services`;
@@ -30,6 +32,11 @@ CREATE TABLE `Users` (
   `keycloakSub` VARCHAR(255) NULL COMMENT 'OIDC sub from Keycloak; unique when set',
   `passwordHash` VARCHAR(255) NULL COMMENT 'Hash only (bcrypt/argon2); NULL if not set yet',
   `role` ENUM('admin', 'client') NOT NULL DEFAULT 'client',
+  `notes` TEXT NULL COMMENT 'Admin-editable client notes',
+  `internalNotes` TEXT NULL COMMENT 'Staff-only notes',
+  `onlineBookingBlocked` TINYINT(1) NOT NULL DEFAULT 0,
+  `bookingBlockedAt` DATETIME(6) NULL,
+  `bookingBlockedSource` ENUM('auto_no_show', 'admin_manual') NULL,
   `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `deletedAt` DATETIME(6) NULL,
@@ -57,10 +64,12 @@ CREATE TABLE `Services` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(160) NOT NULL,
   `description` VARCHAR(500) NULL,
+  `duration` INT NOT NULL DEFAULT 60,
   `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `deletedAt` DATETIME(6) NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  CONSTRAINT `chk_Services_duration` CHECK (`duration` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `Instructors` (
@@ -87,12 +96,15 @@ CREATE TABLE `Classes` (
   `serviceId` INT NOT NULL,
   `studioId` INT NOT NULL,
   `instructorId` INT NOT NULL,
+  `scheduleId` INT NULL,
   `cancellationReason` VARCHAR(500) NULL,
   PRIMARY KEY (`id`),
   KEY `fk_Classes_Services_idx` (`serviceId`),
   KEY `fk_Classes_Studios_idx` (`studioId`, `startsAt`),
   KEY `idx_Classes_startsAt` (`startsAt`),
   KEY `fk_Classes_Instructors_idx` (`instructorId`),
+  KEY `fk_Classes_Schedules_idx` (`scheduleId`),
+  UNIQUE KEY `uq_Classes_schedule_start` (`scheduleId`, `startsAt`),
   CONSTRAINT `fk_Classes_Services`
     FOREIGN KEY (`serviceId`)
     REFERENCES `Services` (`id`)
@@ -112,6 +124,30 @@ CREATE TABLE `Classes` (
   CONSTRAINT `chk_Classes_capacity` CHECK (`capacity` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `Schedules` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `classId` INT NOT NULL,
+  `recurrenceRule` VARCHAR(255) NOT NULL,
+  `startDate` DATE NOT NULL,
+  `endDate` DATE NULL,
+  `daysOfWeek` JSON NULL,
+  `startTime` TIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_Schedules_Classes_idx` (`classId`),
+  CONSTRAINT `fk_Schedules_Classes`
+    FOREIGN KEY (`classId`)
+    REFERENCES `Classes` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `Classes`
+  ADD CONSTRAINT `fk_Classes_Schedules`
+  FOREIGN KEY (`scheduleId`)
+  REFERENCES `Schedules` (`id`)
+  ON DELETE SET NULL
+  ON UPDATE CASCADE;
+
 -- Reservations: at most one active (pending or confirmed) row per user per class (see activeSlot + UNIQUE).
 CREATE TABLE `Reservations` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -120,6 +156,8 @@ CREATE TABLE `Reservations` (
   `status` ENUM('pending', 'confirmed', 'cancelled_by_user', 'cancelled_by_admin', 'no_show') NOT NULL DEFAULT 'pending',
   `userId` INT NOT NULL,
   `classId` INT NOT NULL,
+  `adminCancelReason` VARCHAR(500) NULL COMMENT 'When status is cancelled_by_admin',
+  `cancelReason` VARCHAR(500) NULL COMMENT 'When status is cancelled_by_user',
   `activeSlot` TINYINT UNSIGNED GENERATED ALWAYS AS (
     CASE WHEN `status` IN ('pending', 'confirmed') THEN 1 ELSE NULL END
   ) STORED,
@@ -145,6 +183,8 @@ CREATE TABLE `Waitlist` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `position` INT NULL,
   `notifiedAt` DATETIME(6) NULL,
+  `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `status` ENUM('waiting', 'promoted', 'removed') NOT NULL DEFAULT 'waiting',
   `userId` INT NOT NULL,
   `classId` INT NOT NULL,
   PRIMARY KEY (`id`),
@@ -166,7 +206,7 @@ CREATE TABLE `Waitlist` (
 CREATE TABLE `Notifications` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `channel` ENUM('email', 'sms', 'push') NOT NULL DEFAULT 'email',
-  `type` ENUM('created', 'confirmed', 'cancelled', 'reminder') NOT NULL,
+  `type` ENUM('created', 'confirmed', 'cancelled', 'reminder', 'waitlist_promoted', 'admin_pending_action', 'reservation_rejected') NOT NULL,
   `status` ENUM('pending', 'sent', 'failed') NOT NULL DEFAULT 'pending',
   `sentAt` DATETIME(6) NULL,
   `createdAt` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -194,6 +234,15 @@ CREATE TABLE `Notifications` (
     ON DELETE SET NULL
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `AppSettings` (
+  `key` VARCHAR(64) NOT NULL,
+  `value` TEXT NOT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `AppSettings` (`key`, `value`) VALUES ('booking.autoConfirm', 'false')
+  ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
 
 CREATE TABLE `Subscription` (
   `id` INT NOT NULL AUTO_INCREMENT,

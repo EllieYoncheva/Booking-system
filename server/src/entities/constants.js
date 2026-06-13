@@ -5,6 +5,7 @@ export const TABLES = {
   services: "Services",
   instructors: "Instructors",
   classes: "Classes",
+  schedules: "Schedules",
   reservations: "Reservations",
   waitlist: "Waitlist",
   notifications: "Notifications",

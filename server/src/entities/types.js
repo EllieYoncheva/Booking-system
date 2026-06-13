@@ -14,7 +14,7 @@
  */
 
 /**
- * @typedef {'created'|'confirmed'|'cancelled'|'reminder'} NotificationType
+ * @typedef {'created'|'confirmed'|'cancelled'|'reminder'|'waitlist_promoted'|'admin_pending_action'|'reservation_rejected'} NotificationType
  */
 
 /**
@@ -34,6 +34,11 @@
  * @property {Date|string} createdAt
  * @property {Date|string} updatedAt
  * @property {Date|string|null} deletedAt
+ * @property {string|null} notes admin-editable client notes
+ * @property {string|null} internalNotes staff-only notes
+ * @property {boolean|0|1} onlineBookingBlocked
+ * @property {Date|string|null} bookingBlockedAt
+ * @property {'auto_no_show'|'admin_manual'|null} bookingBlockedSource
  */
 
 /**
@@ -55,6 +60,7 @@
  * @property {number} id
  * @property {string} name
  * @property {string|null} description
+ * @property {number} duration duration in minutes
  * @property {Date|string} createdAt
  * @property {Date|string} updatedAt
  * @property {Date|string|null} deletedAt
@@ -85,7 +91,20 @@
  * @property {number} serviceId
  * @property {number} studioId
  * @property {number} instructorId
+ * @property {number|null} scheduleId
  * @property {string|null} cancellationReason
+ */
+
+/**
+ * Recurring schedule that generates concrete Classes from a template class.
+ * @typedef {Object} Schedule
+ * @property {number} id
+ * @property {number} classId
+ * @property {string} recurrenceRule
+ * @property {string|Date} startDate
+ * @property {string|Date|null} endDate
+ * @property {number[]|string|null} daysOfWeek
+ * @property {string} startTime
  */
 
 /**
@@ -96,6 +115,8 @@
  * @property {ReservationStatus} status
  * @property {number} userId
  * @property {number} classId
+ * @property {string|null} adminCancelReason reason when admin declined
+ * @property {string|null} cancelReason optional reason when client cancelled
  */
 
 /**
@@ -105,6 +126,8 @@
  * @property {Date|string|null} notifiedAt
  * @property {number} userId
  * @property {number} classId
+ * @property {'waiting'|'promoted'|'removed'} [status]
+ * @property {Date|string} [createdAt]
  */
 
 /**

@@ -19,4 +19,6 @@ export const userColumns = Object.freeze({
   createdAt: "createdAt",
   updatedAt: "updatedAt",
   deletedAt: "deletedAt",
+  notes: "notes",
+  internalNotes: "internalNotes",
 });
