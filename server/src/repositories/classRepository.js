@@ -48,11 +48,11 @@ export async function listPublicClassesWithSpots(range = {}) {
   const params = [];
   if (range.from) {
     conditions.push("c.`startsAt` >= ?");
-    params.push(range.from);
+    params.push(toMysqlDateTime(range.from));
   }
   if (range.to) {
     conditions.push("c.`startsAt` <= ?");
-    params.push(range.to);
+    params.push(toMysqlDateTime(range.to));
   }
   if (range.studioId != null) {
     const studioId = Number(range.studioId);
@@ -89,11 +89,11 @@ export async function listClasses(range = {}) {
   const params = [];
   if (range.from) {
     conditions.push("c.`startsAt` >= ?");
-    params.push(range.from);
+    params.push(toMysqlDateTime(range.from));
   }
   if (range.to) {
     conditions.push("c.`startsAt` <= ?");
-    params.push(range.to);
+    params.push(toMysqlDateTime(range.to));
   }
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const [rows] = await pool.query(`${classSelectJoins} ${where} ORDER BY c.startsAt ASC`, params);

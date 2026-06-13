@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import { config } from "../config.js";
+import { fromSofiaWallClock } from "../utils/sofiatime.js";
 
 /** @type {import("mysql2/promise").Pool | null} */
 let pool = null;
@@ -7,7 +8,17 @@ let pool = null;
 /** @returns {import("mysql2/promise").Pool | null} */
 export function getPool() {
   if (!config.databaseUrl?.trim()) return null;
-  if (!pool) pool = mysql.createPool(config.databaseUrl);
+  if (!pool) {
+    pool = mysql.createPool(config.databaseUrl, {
+      typeCast(field, next) {
+        if (field.type === "DATETIME") {
+          const value = field.string();
+          return value ? fromSofiaWallClock(value) : null;
+        }
+        return next();
+      },
+    });
+  }
   return pool;
 }
 

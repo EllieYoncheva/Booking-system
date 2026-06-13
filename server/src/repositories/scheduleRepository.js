@@ -1,5 +1,11 @@
 import { getPool } from "../db/pool.js";
 import * as classRepository from "./classRepository.js";
+import {
+  addSofiaCalendarDays,
+  combineSofiaDateAndTime,
+  sofiaDateOnly,
+  sofiaDayOfWeek,
+} from "../utils/sofiatime.js";
 
 const DEFAULT_GENERATION_DAYS = 90;
 const ICAL_DAYS = {
@@ -60,34 +66,28 @@ function recurrenceKind(rule) {
 }
 
 function dateOnly(value) {
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  return String(value).slice(0, 10);
-}
-
-function addDays(date, count) {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + count);
-  return next;
+  return sofiaDateOnly(value);
 }
 
 function combineDateAndTime(date, startTime) {
-  const time = String(startTime).slice(0, 5);
-  return new Date(`${dateOnly(date)}T${time}:00`);
+  return combineSofiaDateAndTime(date, startTime);
 }
 
-function shouldGenerateForDate(date, schedule, daysOfWeek, monthlyDay) {
+function shouldGenerateForDate(dateStr, schedule, daysOfWeek, monthlyDay) {
   const kind = recurrenceKind(schedule.recurrenceRule);
   const ruleDays = daysFromRecurrenceRule(schedule.recurrenceRule);
   const activeDays = daysOfWeek.length > 0 ? daysOfWeek : ruleDays;
+  const dayIndex = sofiaDayOfWeek(combineSofiaDateAndTime(dateStr, "12:00"));
   if (kind === "daily") {
-    return activeDays.length === 0 || activeDays.includes(date.getUTCDay());
+    return activeDays.length === 0 || activeDays.includes(dayIndex);
   }
   if (kind === "weekly") {
-    const weeklyDays = activeDays.length > 0 ? activeDays : [new Date(schedule.startDate).getUTCDay()];
-    return weeklyDays.includes(date.getUTCDay());
+    const weeklyDays =
+      activeDays.length > 0 ? activeDays : [sofiaDayOfWeek(combineSofiaDateAndTime(schedule.startDate, "12:00"))];
+    return weeklyDays.includes(dayIndex);
   }
   if (kind === "monthly") {
-    return date.getUTCDate() === monthlyDay;
+    return Number(dateStr.slice(8, 10)) === monthlyDay;
   }
   return false;
 }
@@ -146,19 +146,19 @@ export async function deleteSchedule(id) {
 }
 
 export function buildOccurrences(schedule) {
-  const start = new Date(`${dateOnly(schedule.startDate)}T00:00:00Z`);
-  const end = schedule.endDate
-    ? new Date(`${dateOnly(schedule.endDate)}T00:00:00Z`)
-    : addDays(start, DEFAULT_GENERATION_DAYS);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return [];
+  const startDateStr = dateOnly(schedule.startDate);
+  const endDateStr = schedule.endDate
+    ? dateOnly(schedule.endDate)
+    : addSofiaCalendarDays(startDateStr, DEFAULT_GENERATION_DAYS);
+  if (!startDateStr || !endDateStr || endDateStr < startDateStr) return [];
 
   const daysOfWeek = normalizeDays(schedule.daysOfWeek);
-  const monthlyDay = start.getUTCDate();
+  const monthlyDay = Number(startDateStr.slice(8, 10));
   const duration = Number(schedule.serviceDuration);
   if (!Number.isFinite(duration) || duration < 1) return [];
 
   const occurrences = [];
-  for (let cursor = start; cursor <= end; cursor = addDays(cursor, 1)) {
+  for (let cursor = startDateStr; cursor <= endDateStr; cursor = addSofiaCalendarDays(cursor, 1)) {
     if (!shouldGenerateForDate(cursor, schedule, daysOfWeek, monthlyDay)) continue;
     const startsAt = combineDateAndTime(cursor, schedule.startTime);
     const endsAt = new Date(startsAt.getTime() + duration * 60 * 1000);
