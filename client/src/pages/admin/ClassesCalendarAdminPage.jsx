@@ -124,6 +124,16 @@ export default function ClassesCalendarAdminPage() {
       ? "cancelled"
       : status;
 
+  const reservationCancelReason = (reservation) => {
+    if (reservation.status === "cancelled_by_user") {
+      return reservation.cancelReason ?? "—";
+    }
+    if (reservation.status === "cancelled_by_admin") {
+      return reservation.adminCancelReason ?? "—";
+    }
+    return "—";
+  };
+
   const updateReservationStatus = (reservationId, status) => {
     if (!modalClass) return;
     setBusyReservationId(reservationId);
@@ -189,6 +199,7 @@ export default function ClassesCalendarAdminPage() {
                       <th>Клиент</th>
                       <th>Телефон</th>
                       <th>Статус</th>
+                      <th>Причина за анулиране</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -221,6 +232,7 @@ export default function ClassesCalendarAdminPage() {
                             ))}
                           </select>
                         </td>
+                        <td>{reservationCancelReason(reservation)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../api/http.js";
+import { useAuth } from "../context/KeycloakContext.jsx";
 import {
   canClientBookBeforeClass,
   CLIENT_BOOKING_TOO_LATE_MESSAGE,
@@ -105,6 +106,14 @@ function addDays(key, days) {
   return dateKeyFromDate(date);
 }
 
+const CLIENT_SCHEDULE_DAY_COUNT = 7;
+
+function classDateKeyFromStartsAt(startsAt) {
+  const date = new Date(startsAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return dateKeyFromDate(date);
+}
+
 function formatDateStripDay(key, todayKey) {
   if (key === todayKey) return "Днес";
   return dateFromKey(key)
@@ -114,8 +123,14 @@ function formatDateStripDay(key, todayKey) {
 
 export default function SchedulePage() {
   const { authenticated, getToken, keycloak } = useOutletContext();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
   const [searchParams, setSearchParams] = useSearchParams();
   const todayKey = useMemo(() => dateKeyFromDate(new Date()), []);
+  const maxClientScheduleDateKey = useMemo(
+    () => addDays(todayKey, CLIENT_SCHEDULE_DAY_COUNT - 1),
+    [todayKey],
+  );
   const [studios, setStudios] = useState([]);
   const [studiosLoading, setStudiosLoading] = useState(true);
   const [selectedStudioId, setSelectedStudioId] = useState(null);
@@ -241,9 +256,29 @@ export default function SchedulePage() {
     };
   }, [instructorPanelOpen]);
 
+  useEffect(() => {
+    if (isAdmin) return;
+    setDateWindowStart(todayKey);
+    setDateFilter((current) => {
+      if (current < todayKey || current > maxClientScheduleDateKey) {
+        return todayKey;
+      }
+      return current;
+    });
+  }, [isAdmin, todayKey, maxClientScheduleDateKey]);
+
+  const scheduleClasses = useMemo(() => {
+    if (isAdmin) return classes;
+    return classes.filter((row) => {
+      const key = classDateKeyFromStartsAt(row.startsAt);
+      if (!key) return false;
+      return key >= todayKey && key <= maxClientScheduleDateKey;
+    });
+  }, [classes, isAdmin, todayKey, maxClientScheduleDateKey]);
+
   const instructorOptions = useMemo(() => {
     const map = new Map();
-    for (const row of classes) {
+    for (const row of scheduleClasses) {
       const id = Number(row.instructorId);
       const name = instructorNameFromRow(row);
       if (Number.isInteger(id) && id > 0 && name) {
@@ -253,31 +288,39 @@ export default function SchedulePage() {
     return Array.from(map.entries())
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name, "bg"));
-  }, [classes]);
+  }, [scheduleClasses]);
 
   const filteredClasses = useMemo(
     () =>
-      classes.filter((row) => {
+      scheduleClasses.filter((row) => {
         if (instructorFilter && String(row.instructorId) !== instructorFilter) {
           return false;
         }
         return true;
       }),
-    [classes, instructorFilter],
+    [scheduleClasses, instructorFilter],
   );
 
-  const dateStripDays = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, index) => {
+  const dateStripDays = useMemo(() => {
+    if (isAdmin) {
+      return Array.from({ length: CLIENT_SCHEDULE_DAY_COUNT }, (_, index) => {
         const key = addDays(dateWindowStart, index);
         return {
           key,
           day: formatDateStripDay(key, todayKey),
           date: dateFromKey(key).getDate(),
         };
-      }),
-    [dateWindowStart, todayKey],
-  );
+      });
+    }
+    return Array.from({ length: CLIENT_SCHEDULE_DAY_COUNT }, (_, index) => {
+      const key = addDays(todayKey, index);
+      return {
+        key,
+        day: formatDateStripDay(key, todayKey),
+        date: dateFromKey(key).getDate(),
+      };
+    });
+  }, [dateWindowStart, isAdmin, todayKey]);
 
   const byDate = useMemo(
     () => groupRowsByDate(filteredClasses, "startsAt"),
@@ -330,7 +373,7 @@ export default function SchedulePage() {
       return;
     }
     if (action === "reserve") {
-      const cls = classes.find((c) => Number(c.id) === Number(classId));
+      const cls = scheduleClasses.find((c) => Number(c.id) === Number(classId));
       if (cls && !canClientBookBeforeClass(cls.startsAt)) {
         setError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
         alertError(CLIENT_BOOKING_TOO_LATE_MESSAGE);
@@ -377,7 +420,7 @@ export default function SchedulePage() {
   return (
     <main className="page page--schedule">
       <h2>График на класове</h2>
-      {studios.length > 1 && selectedStudioId != null && (
+      {isAdmin && studios.length > 1 && selectedStudioId != null && (
         <div className="schedule-studio-bar">
           <label htmlFor="schedule-studio-select">Студио</label>
           <select
@@ -399,18 +442,20 @@ export default function SchedulePage() {
       )}
       {error && <div className="error-banner">{error}</div>}
 
-      {!studiosLoading && selectedStudioId != null && classes.length > 0 && (
+      {!studiosLoading && selectedStudioId != null && scheduleClasses.length > 0 && (
         <div className="schedule-filter-bar" aria-label="Филтри за графика">
-          <button
-            type="button"
-            className="schedule-date-arrow"
-            aria-label="Предишни дати"
-            onClick={() =>
-              setDateWindowStart((current) => addDays(current, -7))
-            }
-          >
-            ‹
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              className="schedule-date-arrow"
+              aria-label="Предишни дати"
+              onClick={() =>
+                setDateWindowStart((current) => addDays(current, -7))
+              }
+            >
+              ‹
+            </button>
+          )}
           <div className="schedule-date-strip" aria-label="Дата">
             {dateStripDays.map((day) => (
               <button
@@ -429,14 +474,16 @@ export default function SchedulePage() {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="schedule-date-arrow"
-            aria-label="Следващи дати"
-            onClick={() => setDateWindowStart((current) => addDays(current, 7))}
-          >
-            ›
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              className="schedule-date-arrow"
+              aria-label="Следващи дати"
+              onClick={() => setDateWindowStart((current) => addDays(current, 7))}
+            >
+              ›
+            </button>
+          )}
           <div className="schedule-date-picker-wrap">
             <button
               type="button"
@@ -451,10 +498,21 @@ export default function SchedulePage() {
               id="schedule-date-filter"
               type="date"
               value={dateFilter}
+              min={isAdmin ? undefined : todayKey}
+              max={isAdmin ? undefined : maxClientScheduleDateKey}
               onChange={(e) => {
                 if (!e.target.value) return;
+                if (
+                  !isAdmin &&
+                  (e.target.value < todayKey ||
+                    e.target.value > maxClientScheduleDateKey)
+                ) {
+                  return;
+                }
                 setDateFilter(e.target.value);
-                setDateWindowStart(e.target.value);
+                if (isAdmin) {
+                  setDateWindowStart(e.target.value);
+                }
                 scrollToDate(e.target.value);
               }}
             />
@@ -518,7 +576,7 @@ export default function SchedulePage() {
         </p>
       ) : pickerOpen ? null : loading ? (
         <p>Зареждане…</p>
-      ) : classes.length === 0 ? (
+      ) : scheduleClasses.length === 0 ? (
         <p className="muted">
           Няма предстоящи класове за това студио. Добавете данни от админ панела
           или стартирайте seed скрипта.

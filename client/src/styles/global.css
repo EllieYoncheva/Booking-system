@@ -1185,6 +1185,24 @@ button:disabled {
   line-height: 1.45;
 }
 
+.app-alert-input-label {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.app-alert-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border, #d8d8d8);
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
 .app-alert-actions {
   margin-top: 1.25rem;
   display: flex;

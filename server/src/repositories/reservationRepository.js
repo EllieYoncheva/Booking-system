@@ -396,6 +396,10 @@ export async function cancelActiveReservationWithPromotion(reservationId, opts =
     asAdmin && opts.adminReason != null && String(opts.adminReason).trim()
       ? String(opts.adminReason).trim().slice(0, 500)
       : null;
+  const cancelReason =
+    !asAdmin && opts.cancelReason != null && String(opts.cancelReason).trim()
+      ? String(opts.cancelReason).trim().slice(0, 500)
+      : null;
 
   const promotionStatus = await getNewReservationStatus();
 
@@ -426,9 +430,10 @@ export async function cancelActiveReservationWithPromotion(reservationId, opts =
       `UPDATE \`Reservations\`
        SET \`status\` = ?,
            \`cancelledAt\` = CURRENT_TIMESTAMP(6),
-           \`adminCancelReason\` = ?
+           \`adminCancelReason\` = ?,
+           \`cancelReason\` = ?
        WHERE \`id\` = ? AND \`status\` IN ('pending', 'confirmed')`,
-      [newStatus, asAdmin ? adminReason : null, reservationId]
+      [newStatus, asAdmin ? adminReason : null, asAdmin ? null : cancelReason, reservationId]
     );
     if (!upd.affectedRows) {
       await conn.rollback();

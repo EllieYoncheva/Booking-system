@@ -19,9 +19,11 @@ export function joinClassWaitlist(getToken, classId) {
 /**
  * @param {() => Promise<string | undefined>} getToken
  * @param {number|string} reservationId
+ * @param {string|null} [cancelReason]
  */
-export function cancelReservation(getToken, reservationId) {
+export function cancelReservation(getToken, reservationId, cancelReason = null) {
   return apiRequest(getToken, `/api/reservations/${reservationId}/cancel`, {
     method: "PATCH",
+    body: JSON.stringify({ cancelReason }),
   });
 }

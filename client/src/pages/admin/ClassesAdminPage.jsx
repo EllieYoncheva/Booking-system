@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { apiRequest } from "../../api/http.js";
 
@@ -99,6 +99,12 @@ export default function ClassesAdminPage() {
     daysOfWeek: ["1", "3", "5"],
     startTime: "09:00",
   });
+  const [filterStudioId, setFilterStudioId] = useState("all");
+
+  const filteredClasses = useMemo(() => {
+    if (filterStudioId === "all") return classes;
+    return classes.filter((c) => String(c.studioId) === filterStudioId);
+  }, [classes, filterStudioId]);
 
   const loadRefs = () =>
     Promise.all([
@@ -394,6 +400,20 @@ export default function ClassesAdminPage() {
         </form>
       </div>
       <div className="panel table-wrap">
+        <label className="week-cal-filter" style={{ marginBottom: "1rem" }}>
+          <span>Студио</span>
+          <select
+            value={filterStudioId}
+            onChange={(e) => setFilterStudioId(e.target.value)}
+          >
+            <option value="all">Всички студиа</option>
+            {studios.map((s) => (
+              <option key={s.id} value={String(s.id)}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <table className="data">
           <thead>
             <tr>
@@ -406,7 +426,7 @@ export default function ClassesAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {classes.map((c) => (
+            {filteredClasses.map((c) => (
               <tr key={c.id}>
                 <td>
                   {formatWhen(c.startsAt)} – {formatWhen(c.endsAt)}

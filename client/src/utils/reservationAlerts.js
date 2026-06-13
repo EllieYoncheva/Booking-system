@@ -20,6 +20,21 @@ export function confirmReserve() {
   });
 }
 
+/** @returns {Promise<string|null>} cancel reason or null if dismissed */
+export function confirmCancelReservation() {
+  return showAppAlert({
+    title: "Анулиране на резервация",
+    message:
+      "Сигурни ли сте, че желаете да анулирате резервацията за този клас?",
+    confirmLabel: "Анулирай",
+    cancelLabel: "Отказ",
+    showCancel: true,
+    showInput: true,
+    inputLabel: "Причина за анулиране",
+    confirmVariant: "danger",
+  });
+}
+
 /** @returns {Promise<boolean>} */
 export function confirmWaitlistJoin() {
   return showAppAlert({

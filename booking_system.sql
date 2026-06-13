@@ -157,6 +157,7 @@ CREATE TABLE `Reservations` (
   `userId` INT NOT NULL,
   `classId` INT NOT NULL,
   `adminCancelReason` VARCHAR(500) NULL COMMENT 'When status is cancelled_by_admin',
+  `cancelReason` VARCHAR(500) NULL COMMENT 'When status is cancelled_by_user',
   `activeSlot` TINYINT UNSIGNED GENERATED ALWAYS AS (
     CASE WHEN `status` IN ('pending', 'confirmed') THEN 1 ELSE NULL END
   ) STORED,

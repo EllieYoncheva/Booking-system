@@ -5,10 +5,18 @@
  *   confirmLabel?: string,
  *   cancelLabel?: string,
  *   showCancel?: boolean,
+ *   showInput?: boolean,
+ *   inputLabel?: string,
+ *   inputPlaceholder?: string,
+ *   confirmVariant?: "primary" | "danger",
  * }} AppAlertOptions
  */
 
-/** @type {((state: AppAlertOptions & { resolve: (confirmed: boolean) => void } | null) => void) | null} */
+/**
+ * @typedef {{ confirmed: boolean, inputValue?: string }} AppAlertResult
+ */
+
+/** @type {((state: AppAlertOptions & { resolve: (result: AppAlertResult) => void } | null) => void) | null} */
 let notify = null;
 
 /** @param {typeof notify} fn */
@@ -18,13 +26,13 @@ export function registerAppAlertNotifier(fn) {
 
 /**
  * @param {AppAlertOptions} options
- * @returns {Promise<boolean>} true if confirmed (OK), false if cancelled
+ * @returns {Promise<boolean|string|null>} confirmed without input; input value or null when cancelled with `showInput`
  */
 export function showAppAlert(options) {
   return new Promise((resolve) => {
     if (!notify) {
       window.alert(options.message);
-      resolve(true);
+      resolve(options.showInput ? "" : true);
       return;
     }
     notify({
@@ -33,7 +41,17 @@ export function showAppAlert(options) {
       confirmLabel: options.confirmLabel ?? "OK",
       cancelLabel: options.cancelLabel ?? "Отказ",
       showCancel: options.showCancel !== false,
-      resolve,
+      showInput: options.showInput ?? false,
+      inputLabel: options.inputLabel ?? "",
+      inputPlaceholder: options.inputPlaceholder ?? "",
+      confirmVariant: options.confirmVariant ?? "primary",
+      resolve: (result) => {
+        if (options.showInput) {
+          resolve(result.confirmed ? (result.inputValue ?? "") : null);
+        } else {
+          resolve(result.confirmed);
+        }
+      },
     });
   });
 }

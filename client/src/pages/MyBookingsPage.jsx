@@ -19,6 +19,7 @@ import {
   alertAfterReserve,
   alertError,
   alertMessage,
+  confirmCancelReservation,
   confirmReserve,
   confirmWaitlistJoin,
 } from "../utils/reservationAlerts.js";
@@ -226,14 +227,22 @@ export default function MyBookingsPage() {
         ? past
         : studioWaitlist;
 
-  const cancel = (id) => {
+  const cancel = async (id) => {
     if (!authenticated) {
       keycloak.login({ redirectUri: window.location.href });
       return;
     }
+    const cancelReason = await confirmCancelReservation();
+    if (cancelReason === null) return;
+
     setCancelling(id);
     setError("");
-    apiRequest(getToken, `/api/reservations/${id}/cancel`, { method: "PATCH" })
+    apiRequest(getToken, `/api/reservations/${id}/cancel`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        cancelReason: cancelReason.trim() || null,
+      }),
+    })
       .then(() => load())
       .catch((e) => setError(e.message))
       .finally(() => setCancelling(null));

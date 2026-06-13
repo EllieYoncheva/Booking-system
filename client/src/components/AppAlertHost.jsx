@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import { registerAppAlertNotifier } from "../utils/appAlert.js";
 
 export default function AppAlertHost() {
-  /** @type {[null | import("../utils/appAlert.js").AppAlertOptions & { resolve: (v: boolean) => void }]} */
+  /** @type {[null | import("../utils/appAlert.js").AppAlertOptions & { resolve: (v: import("../utils/appAlert.js").AppAlertResult) => void }]} */
   const [alert, setAlert] = useState(null);
+  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
-    registerAppAlertNotifier(setAlert);
+    registerAppAlertNotifier((next) => {
+      setInputValue("");
+      setAlert(next);
+    });
     return () => registerAppAlertNotifier(null);
   }, []);
 
@@ -15,7 +19,7 @@ export default function AppAlertHost() {
   const close = (confirmed) => {
     const resolve = alert.resolve;
     setAlert(null);
-    resolve(confirmed);
+    resolve({ confirmed, inputValue: alert.showInput ? inputValue : undefined });
   };
 
   return (
@@ -31,13 +35,29 @@ export default function AppAlertHost() {
         <p id="app-alert-message" className="app-alert-message">
           {alert.message}
         </p>
+        {alert.showInput && (
+          <label className="app-alert-input-label">
+            {alert.inputLabel}
+            <textarea
+              className="app-alert-input"
+              rows={3}
+              value={inputValue}
+              placeholder={alert.inputPlaceholder}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
+          </label>
+        )}
         <div className="app-alert-actions">
           {alert.showCancel && (
             <button type="button" onClick={() => close(false)}>
               {alert.cancelLabel}
             </button>
           )}
-          <button type="button" className="primary" onClick={() => close(true)}>
+          <button
+            type="button"
+            className={alert.confirmVariant === "danger" ? "danger" : "primary"}
+            onClick={() => close(true)}
+          >
             {alert.confirmLabel}
           </button>
         </div>

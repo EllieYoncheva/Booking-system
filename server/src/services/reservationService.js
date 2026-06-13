@@ -148,7 +148,7 @@ export async function confirmReservationAdmin(reservationId) {
 
 /**
  * Client cancels their reservation (frees slot + waitlist promotion + notifications).
- * @param {{ reservationId: number, appUserId: number }} input
+ * @param {{ reservationId: number, appUserId: number, cancelReason?: string|null }} input
  * @returns {Promise<{ ok: true } | { ok: false, code: string }>}
  */
 export async function cancelReservationForClient(input) {
@@ -163,6 +163,7 @@ export async function cancelReservationForClient(input) {
   const raw = await reservationRepository.cancelActiveReservationWithPromotion(input.reservationId, {
     userId: input.appUserId,
     asAdmin: false,
+    cancelReason: input.cancelReason,
   });
   if (!raw.ok) return { ok: false, code: "NOT_FOUND" };
   const pool = getPool();

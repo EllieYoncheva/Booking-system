@@ -153,9 +153,14 @@ router.patch("/reservations/:id/cancel", async (req, res, next) => {
     if (!Number.isInteger(id) || id < 1) {
       return res.status(400).json({ error: "Invalid reservation id" });
     }
+    const cancelReason =
+      req.body && typeof req.body.cancelReason === "string"
+        ? req.body.cancelReason.trim().slice(0, 500) || null
+        : null;
     const result = await reservationService.cancelReservationForClient({
       reservationId: id,
       appUserId: req.appUser.id,
+      cancelReason,
     });
     if (!result.ok) {
       const map = {

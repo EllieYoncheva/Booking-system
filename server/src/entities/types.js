@@ -116,6 +116,7 @@
  * @property {number} userId
  * @property {number} classId
  * @property {string|null} adminCancelReason reason when admin declined
+ * @property {string|null} cancelReason optional reason when client cancelled
  */
 
 /**
