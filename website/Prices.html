@@ -9,757 +9,123 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap"
       rel="stylesheet"
     />
-    <style>
-      :root {
-        --cream: #f7f1e9;
-        --warm-white: #fdf9f4;
-        --sand: #e8ddd0;
-        --taupe: #ceb79e;
-        --brown: #7f7161;
-        --dark-brown: #3d2e24;
-        --accent: #ce6857;
-        --text: #2c1f14;
-        --text-light: #7f7161;
-        --shadow: rgba(61, 43, 31, 0.08);
-      }
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        font-family: "Montserrat Alternates", sans-serif;
-        background: var(--warm-white);
-        color: var(--text);
-        overflow-x: hidden;
-      }
-
-      section {
-        padding: 100px 48px;
-      }
-
-      /* ── NAV ── */
-      nav {
-        position: fixed;
-        width: 100%;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 48px;
-        background: var(--warm-white);
-        border-bottom: 1px solid var(--sand);
-      }
-
-      .nav-logo {
-        display: flex;
-        align-items: center;
-      }
-
-      .nav-logo-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--dark-brown);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--cream);
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 36px;
-        list-style: none;
-      }
-
-      .nav-links a {
-        text-decoration: none;
-        color: var(--text-light);
-        font-size: 13px;
-        font-weight: 400;
-        transition: color 0.2s;
-      }
-      .nav-links a:hover,
-      .nav-links a.active {
-        color: var(--accent);
-      }
-
-      .btn-primary {
-        display: inline-block;
-        background: var(--accent);
-        color: var(--cream);
-        text-decoration: none;
-        padding: 14px 36px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          transform 0.15s,
-          box-shadow 0.2s;
-        box-shadow: 0 4px 24px rgba(181, 132, 90, 0.35);
-        border: none;
-        cursor: pointer;
-      }
-      .btn-primary:hover {
-        background: var(--brown);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(181, 132, 90, 0.4);
-      }
-
-      /* ── PRICING SECTION ── */
-      .pricing-section {
-        padding: 120px 48px 80px;
-      }
-
-      .pricing-inner {
-        max-width: 1000px;
-        margin: 0 auto;
-      }
-
-      .pricing-header {
-        text-align: center;
-        margin-bottom: 56px;
-      }
-
-      .pricing-header h2 {
-        font-size: clamp(32px, 5vw, 52px);
-        font-weight: 300;
-        color: var(--dark-brown);
-        margin-bottom: 14px;
-      }
-
-      .pricing-header p {
-        font-size: 14px;
-        color: var(--text-light);
-        line-height: 1.7;
-        max-width: 500px;
-        margin: 0 auto;
-      }
-
-      .pricing-header p strong {
-        color: var(--dark-brown);
-        font-weight: 600;
-      }
-
-      .pricing-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-      }
-
-      .price-card {
-        background: var(--warm-white);
-        border-radius: 12px;
-        padding: 36px 24px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 10px;
-        border: 1px solid var(--dark-brown);
-        box-shadow: 0 4px 24px var(--shadow);
-        transition:
-          transform 0.25s ease,
-          box-shadow 0.25s ease;
-      }
-
-      .pricing-section.alt .price-card {
-        background: var(--cream);
-      }
-
-      .price-card-label {
-        font-size: 11px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: var(--taupe);
-        font-weight: 500;
-      }
-
-      .price-card-amount {
-        font-size: 48px;
-        font-weight: 300;
-        color: var(--dark-brown);
-        line-height: 1;
-        margin: 8px 0 4px;
-      }
-
-      .price-card-amount sup {
-        font-size: 22px;
-        font-weight: 400;
-        vertical-align: super;
-      }
-
-      .price-card-validity {
-        font-size: 11px;
-        color: var(--text-light);
-        line-height: 1.6;
-        min-height: 34px;
-      }
-
-      .price-card .btn-primary {
-        margin-top: 10px;
-        padding: 12px 28px;
-        font-size: 12px;
-      }
-
-      /* ── GIFT CARD ── */
-      .gift-section {
-        padding: 80px 48px;
-        background: var(--brown);
-      }
-
-      .gift-inner {
-        max-width: 900px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 64px;
-        align-items: center;
-      }
-
-      .gift-visual {
-        background: var(--sand);
-        border-radius: 24px;
-        height: 300px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-      }
-
-      .gift-visual-inner {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        color: var(--dark-brown);
-        text-align: center;
-      }
-
-      .gift-visual-badge {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: var(--dark-brown);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--cream);
-        font-size: 22px;
-        font-weight: 300;
-        letter-spacing: -1px;
-        margin-bottom: 6px;
-      }
-
-      .gift-visual-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--dark-brown);
-        letter-spacing: 2px;
-        text-transform: uppercase;
-      }
-
-      .gift-visual-subtitle {
-        font-size: 11px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: var(--taupe);
-      }
-
-      .gift-ribbon {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-      }
-
-      .gift-ribbon::before,
-      .gift-ribbon::after {
-        content: "";
-        position: absolute;
-        background: rgba(206, 183, 158, 0.25);
-      }
-      .gift-ribbon::before {
-        top: 0;
-        bottom: 0;
-        left: 50%;
-        width: 1px;
-      }
-      .gift-ribbon::after {
-        left: 0;
-        right: 0;
-        top: 50%;
-        height: 1px;
-      }
-
-      .gift-info h2 {
-        font-size: clamp(28px, 4vw, 42px);
-        font-weight: 300;
-        color: var(--warm-white);
-        margin-bottom: 16px;
-      }
-
-      .gift-info p {
-        font-size: 14px;
-        color: var(--warm-white);
-        line-height: 1.8;
-        margin-bottom: 24px;
-      }
-
-      .gift-options {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 28px;
-      }
-
-      .gift-options li {
-        font-size: 13px;
-        color: var(--warm-white);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .gift-options li::before {
-        content: "›";
-        color: var(--accent);
-        font-size: 18px;
-        line-height: 1;
-      }
-
-      /* ── CONTACT ── */
-      .contact-section {
-        padding: 80px 48px;
-        background: var(--warm-white);
-      }
-
-      .contact-inner {
-        max-width: 900px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 64px;
-        align-items: start;
-      }
-
-      .contact-header {
-        margin-bottom: 36px;
-      }
-
-      .contact-header h2 {
-        font-size: clamp(32px, 5vw, 52px);
-        font-weight: 300;
-        color: var(--dark-brown);
-        margin-bottom: 14px;
-      }
-
-      .contact-items {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .contact-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-      }
-
-      .contact-label {
-        font-size: 11px;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        color: var(--taupe);
-        margin-bottom: 3px;
-      }
-
-      .contact-value {
-        font-size: 14px;
-        color: var(--dark-brown);
-        font-weight: 400;
-        text-decoration: none;
-      }
-
-      a.contact-value:hover {
-        color: var(--accent);
-      }
-
-      .map-placeholder {
-        background: var(--cream);
-        border-radius: 20px;
-        height: 300px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(196, 180, 154, 0.4);
-        overflow: hidden;
-        position: relative;
-      }
-
-      .map-grid {
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(var(--taupe) 1px, transparent 1px),
-          linear-gradient(90deg, var(--taupe) 1px, transparent 1px);
-        background-size: 30px 30px;
-        opacity: 0.15;
-      }
-
-      .map-pin {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .map-pin-dot {
-        width: 20px;
-        height: 20px;
-        background: var(--accent);
-        border-radius: 50%;
-        border: 3px solid var(--cream);
-        box-shadow: 0 0 0 4px rgba(181, 132, 90, 0.2);
-      }
-
-      .map-pin-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--dark-brown);
-        background: var(--warm-white);
-        padding: 4px 10px;
-        border-radius: 20px;
-        white-space: nowrap;
-        box-shadow: 0 2px 10px var(--shadow);
-      }
-
-      /* ── FOOTER ── */
-      footer {
-        background: var(--dark-brown);
-        padding: 64px 48px 32px;
-        color: var(--taupe);
-      }
-
-      .footer-top {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 48px;
-        padding-bottom: 40px;
-        border-bottom: 1px solid rgba(206, 183, 158, 0.15);
-        margin-bottom: 24px;
-      }
-
-      .footer-col-title {
-        font-size: 10px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: rgba(206, 183, 158, 0.5);
-        margin-bottom: 18px;
-        font-weight: 500;
-      }
-
-      .footer-links {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .footer-links a {
-        text-decoration: none;
-        color: var(--taupe);
-        font-size: 13px;
-        transition: color 0.2s;
-      }
-      .footer-links a:hover {
-        color: var(--cream);
-      }
-
-      .footer-contact-line {
-        font-size: 13px;
-        margin-bottom: 6px;
-        line-height: 1.7;
-      }
-
-      .footer-social {
-        display: flex;
-        gap: 10px;
-        margin-top: 4px;
-      }
-      .footer-social-btn {
-        width: 34px;
-        height: 34px;
-        border: 1px solid rgba(206, 183, 158, 0.25);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: var(--taupe);
-        font-size: 13px;
-        font-weight: 600;
-        transition:
-          border-color 0.2s,
-          color 0.2s,
-          background 0.2s;
-      }
-      .footer-social-btn:hover {
-        border-color: var(--taupe);
-        color: var(--cream);
-        background: rgba(206, 183, 158, 0.1);
-      }
-
-      .footer-bottom {
-        text-align: center;
-        font-size: 11px;
-        color: rgba(206, 183, 158, 0.4);
-        letter-spacing: 0.5px;
-      }
-
-      /* ── FADE IN ── */
-      .fade-in {
-        opacity: 0;
-        transform: translateY(28px);
-        transition:
-          opacity 0.7s ease,
-          transform 0.7s ease;
-      }
-      .fade-in.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      /* ── RESPONSIVE ── */
-      @media (max-width: 900px) {
-        .pricing-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-
-      @media (max-width: 768px) {
-        nav {
-          padding: 16px 20px;
-        }
-        .nav-links {
-          display: none;
-        }
-        section,
-        .pricing-section,
-        .gift-section,
-        .contact-section {
-          padding: 60px 24px;
-        }
-        .pricing-grid {
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-        }
-        .price-card {
-          padding: 28px 16px;
-        }
-        .price-card-amount {
-          font-size: 36px;
-        }
-        .gift-inner,
-        .contact-inner {
-          grid-template-columns: 1fr;
-          gap: 36px;
-        }
-        .footer-top {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .pricing-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
-    <!-- NAV -->
-    <nav>
-      <div class="nav-logo">
-        <div class="nav-logo-icon">PR</div>
-      </div>
-      <ul class="nav-links">
-        <li><a href="Home.html">Начало</a></li>
-        <li><a href="Team.html">Екип</a></li>
-        <li><a href="#schedule" class="active">Цени</a></li>
-        <li><a href="#equipment">Пилатес оборудване</a></li>
-        <li><a href="Contacts.html">Контакти</a></li>
-      </ul>
-      <a href="http://localhost:3001/schedule" class="btn-primary">Запази час</a>
-    </nav>
+  <body class="prices-page">
+    <div id="navbar"></div>
 
-    <!-- SPECIAL PRICES (both studios) -->
     <section class="pricing-section" id="special-prices">
       <div class="pricing-inner">
         <div class="pricing-header fade-in">
           <h2>Специални цени</h2>
           <p>
             Специалните цени са за клиенти, които посещават
-            <strong>двете</strong> ни студиа в Пловдив — 3PSTUDIO &amp; PILATES
-            ROOM
+            <strong>двете</strong> ни студиа в Пловдив —
+            <strong>3PSTUDIO &amp; PILATES ROOM</strong>
           </p>
         </div>
         <div class="pricing-grid">
           <div class="price-card fade-in">
             <div class="price-card-label">1 посещение</div>
-            <div class="price-card-amount"><sup>€</sup>15</div>
-            <div class="price-card-validity">
-              Валидност 5 седмици от първата тренировка
-            </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
+            <div class="price-card-amount"><sup>€</sup>16</div>
           </div>
           <div class="price-card fade-in">
             <div class="price-card-label">4 посещения</div>
-            <div class="price-card-amount"><sup>€</sup>58</div>
+            <div class="price-card-amount"><sup>€</sup>60</div>
             <div class="price-card-validity">
               Валидност 5 седмици от първата тренировка
             </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
           </div>
           <div class="price-card fade-in">
             <div class="price-card-label">8 посещения</div>
-            <div class="price-card-amount"><sup>€</sup>107</div>
+            <div class="price-card-amount"><sup>€</sup>110</div>
             <div class="price-card-validity">
               Валидност 5 седмици от първата тренировка
             </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
           </div>
           <div class="price-card fade-in">
             <div class="price-card-label">Индивидуална тренировка</div>
-            <div class="price-card-amount"><sup>€</sup>15</div>
-            <div class="price-card-validity">
-              Валидност 5 седмици от първата тренировка
-            </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
+            <div class="price-card-amount"><sup>€</sup>26</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- REGULAR PRICES (Pilates Room only) -->
     <section class="pricing-section alt" id="prices">
       <div class="pricing-inner">
         <div class="pricing-header fade-in">
           <h2>Цени</h2>
           <p>
-            Цени са за клиенти, които посещават <strong>само</strong> PILATES
-            ROOM
+            Цени са за клиенти, които посещават
+            <strong>само PILATES ROOM</strong>
           </p>
         </div>
         <div class="pricing-grid">
           <div class="price-card fade-in">
             <div class="price-card-label">1 посещение</div>
-            <div class="price-card-amount"><sup>€</sup>15</div>
-            <div class="price-card-validity">
-              Валидност 5 седмици от първата тренировка
-            </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
+            <div class="price-card-amount"><sup>€</sup>18</div>
           </div>
           <div class="price-card fade-in">
             <div class="price-card-label">4 посещения</div>
-            <div class="price-card-amount"><sup>€</sup>58</div>
+            <div class="price-card-amount"><sup>€</sup>67</div>
             <div class="price-card-validity">
               Валидност 5 седмици от първата тренировка
             </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
           </div>
           <div class="price-card fade-in">
             <div class="price-card-label">8 посещения</div>
-            <div class="price-card-amount"><sup>€</sup>107</div>
+            <div class="price-card-amount"><sup>€</sup>128</div>
             <div class="price-card-validity">
               Валидност 5 седмици от първата тренировка
             </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
           </div>
           <div class="price-card fade-in">
             <div class="price-card-label">Индивидуална тренировка</div>
-            <div class="price-card-amount"><sup>€</sup>15</div>
-            <div class="price-card-validity">
-              Валидност 5 седмици от първата тренировка
-            </div>
-            <a href="#contact" class="btn-primary">Запази час</a>
+            <div class="price-card-amount"><sup>€</sup>26</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- GIFT CARD -->
     <section class="gift-section" id="gift">
       <div class="gift-inner">
-        <div class="gift-visual fade-in">
-          <div class="gift-ribbon"></div>
-          <div class="gift-visual-inner">
-            <div class="gift-visual-badge">€</div>
-            <div class="gift-visual-subtitle">Evolve Pilates Lab</div>
-            <div class="gift-visual-title">Gift Card</div>
-            <div
-              style="
-                font-size: 11px;
-                color: var(--taupe);
-                letter-spacing: 1.5px;
-                text-transform: uppercase;
-                margin-top: 4px;
-              "
-            >
-              Pilates Reformer Class
-            </div>
-          </div>
-        </div>
+        <img class="gift-visual fade-in" src="img/vaucher.jpg" alt="giftcard" />
         <div class="gift-info fade-in">
-          <h2>Подарък с мисъл</h2>
+          <h2>Подаръчен ваучер</h2>
           <p>
-            Искаш да подариш нещо различно, красиво и стойностно? С ваучер за
-            Pilates Reformer в Evolve подаряваш не просто тренировка, а
-            изживяване — време за грижа, движение и баланс.
+            Подарете нещо повече от жест — подарете изживяване. С ваучер от
+            Pilates Room дарявате не просто тренировка, а усещане за движение,
+            лекота и презареждане. Истински подарък с мисъл.
           </p>
           <ul class="gift-options">
-            <li>Единичен клас</li>
-            <li>Пакет от тренировки</li>
+            <li>Еднократно посещение</li>
+            <li>Персонален Pilates клас</li>
+            <li>Пакет от няколко посещения</li>
           </ul>
           <a href="Contacts.html" class="btn-primary">Пиши ни</a>
         </div>
       </div>
     </section>
 
-    <!-- CONTACT -->
-    <section class="contact-section" id="contact">
+    <section class="contact" id="contact">
       <div class="contact-inner">
         <div>
           <div class="contact-header fade-in">
-            <h2>Свържете се с нас</h2>
-            <p
-              style="
-                margin-top: 16px;
-                font-size: 14px;
-                color: var(--text-light);
-                line-height: 1.7;
-              "
-            >
+            <p class="section-label">Локация & Контакт</p>
+            <h2 class="section-title">Свържете се с нас</h2>
+            <p class="contact-intro">
               Ще се радваме да се чуем! Свържете се с нас за записване, въпроси
               или индивидуална консултация.
             </p>
           </div>
           <div class="contact-items fade-in">
             <div class="contact-item">
-              <span>📍</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Адрес</div>
                 <span class="contact-value"
@@ -768,7 +134,11 @@
               </div>
             </div>
             <div class="contact-item">
-              <span>📞</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M224.2 89C216.3 70.1 195.7 60.1 176.1 65.4L170.6 66.9C106 84.5 50.8 147.1 66.9 223.3C104 398.3 241.7 536 416.7 573.1C493 589.3 555.5 534 573.1 469.4L574.6 463.9C580 444.2 569.9 423.6 551.1 415.8L453.8 375.3C437.3 368.4 418.2 373.2 406.8 387.1L368.2 434.3C297.9 399.4 241.3 341 208.8 269.3L253 233.3C266.9 222 271.6 202.9 264.8 186.3L224.2 89z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Телефон</div>
                 <a href="tel:+359887307201" class="contact-value"
@@ -777,7 +147,11 @@
               </div>
             </div>
             <div class="contact-item">
-              <span>✉️</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M112 128C85.5 128 64 149.5 64 176C64 191.1 71.1 205.3 83.2 214.4L291.2 370.4C308.3 383.2 331.7 383.2 348.8 370.4L556.8 214.4C568.9 205.3 576 191.1 576 176C576 149.5 554.5 128 528 128L112 128zM64 260L64 448C64 483.3 92.7 512 128 512L512 512C547.3 512 576 483.3 576 448L576 260L377.6 408.8C343.5 434.4 296.5 434.4 262.4 408.8L64 260z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Имейл</div>
                 <a
@@ -788,7 +162,11 @@
               </div>
             </div>
             <div class="contact-item">
-              <span>🕐</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Работно време</div>
                 <span class="contact-value"
@@ -799,64 +177,21 @@
           </div>
         </div>
         <div class="map-placeholder fade-in">
-          <div class="map-grid"></div>
-          <div class="map-pin">
-            <div class="map-pin-dot"></div>
-            <div class="map-pin-label">Pilates Room Пловдив</div>
-          </div>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3385.502175577877!2d24.74850022080868!3d42.15068434697287!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14acd1bd43036865%3A0x1b6bda4713e46487!2z0JrQsNC_0LDQvdCw0KDQsNC50L7QvSDQptC10L3RgtGA0LDQu9C10L0sINGD0LsuIOKAntCk0YDQtdC00LXRgNC40Log0JbQvtC70LjQviDQmtGO0YDQuOKAnCDihJYxOCwgNDAwMCDQn9C70L7QstC00LjQsg!5e1!3m2!1sbg!2sbg!4v1777885252232!5m2!1sbg!2sbg"
+            width="600"
+            height="450"
+            class="map-frame"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
         </div>
       </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer>
-      <div class="footer-top">
-        <div>
-          <div class="footer-col-title">Страници</div>
-          <ul class="footer-links">
-            <li><a href="#home">Начало</a></li>
-            <li><a href="#team">Екип</a></li>
-            <li><a href="#schedule">Цени</a></li>
-            <li><a href="#equipment">Пилатес оборудване</a></li>
-            <li><a href="#contact">Контакти</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="footer-col-title">Контакти</div>
-          <p class="footer-contact-line">
-            ул. Ж.Кюри 18, ет.3, офис 7,8, Пловдив
-          </p>
-          <p class="footer-contact-line">+359 887 307 201</p>
-          <p class="footer-contact-line">pilatesroomplovdiv@gmail.com</p>
-        </div>
-        <div>
-          <div class="footer-col-title">Свържете се с нас</div>
-          <div class="footer-social">
-            <a href="#" class="footer-social-btn" aria-label="Facebook">f</a>
-            <a href="#" class="footer-social-btn" aria-label="Instagram">◎</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        Copyright © 2026 Студио Пилатес | Powered by PilatesRoom
-      </div>
-    </footer>
+    <div id="footer"></div>
 
-    <script>
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e, i) => {
-            if (e.isIntersecting) {
-              setTimeout(() => e.target.classList.add("visible"), i * 80);
-            }
-          });
-        },
-        { threshold: 0.12 },
-      );
-
-      document
-        .querySelectorAll(".fade-in")
-        .forEach((el) => observer.observe(el));
-    </script>
+    <script src="app.js"></script>
   </body>
 </html>

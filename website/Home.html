@@ -9,793 +9,29 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap"
       rel="stylesheet"
     />
-    <style>
-      :root {
-        --cream: #f7f1e9;
-        --warm-white: #f9f0eb;
-        --sand: #e8ddd0;
-        --taupe: #ceb79e;
-        --brown: #7f7161;
-        --dark-brown: #3d2e24;
-        --accent: #ce6857;
-        --text: #2c1f14;
-        --text-light: #7f7161;
-        --shadow: rgba(61, 43, 31, 0.08);
-      }
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        font-family: "Montserrat Alternates", sans-serif;
-        background: var(--warm-white);
-        color: var(--text);
-        overflow-x: hidden;
-      }
-
-      /* ── NAV ── */
-      nav {
-        position: fixed;
-        width: 100%;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 48px;
-        background: var(--warm-white);
-        border-bottom: 1px solid var(--sand);
-      }
-
-      .nav-logo {
-        display: flex;
-        align-items: center;
-      }
-
-      .nav-logo-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--dark-brown);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--cream);
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 36px;
-        list-style: none;
-      }
-
-      .nav-links a {
-        text-decoration: none;
-        color: var(--text-light);
-        font-size: 13px;
-        font-weight: 400;
-        transition: color 0.2s;
-      }
-      .nav-links a:hover {
-        color: var(--accent);
-      }
-
-      /* ── HERO ── */
-      .hero {
-        min-height: 100vh;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-      }
-
-      .hero-bg {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          135deg,
-          #2c1f14 0%,
-          #5c3d28 40%,
-          #8b6f47 70%,
-          #c4b49a 100%
-        );
-      }
-
-      .hero-content {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        padding: 0 24px;
-        animation: fadeUp 1s ease both;
-      }
-
-      .hero-eyebrow {
-        font-family: "DM Sans", sans-serif;
-        font-size: 11px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: var(--taupe);
-        margin-bottom: 20px;
-      }
-
-      .hero-title {
-        font-family: "Montserrat Alternates", sans-serif;
-        font-size: 96px;
-        font-weight: 300;
-        color: var(--cream);
-        margin-bottom: 24px;
-      }
-
-      .hero-title em {
-        font-style: italic;
-        color: var(--taupe);
-      }
-
-      .hero-subtitle {
-        font-size: 15px;
-        font-weight: 300;
-        color: var(--cream);
-        margin-bottom: 44px;
-      }
-
-      .btn-primary {
-        display: inline-block;
-        background: var(--accent);
-        color: var(--cream);
-        text-decoration: none;
-        padding: 14px 36px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          transform 0.15s,
-          box-shadow 0.2s;
-        box-shadow: 0 4px 24px rgba(181, 132, 90, 0.35);
-      }
-      .btn-primary:hover {
-        background: var(--brown);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(181, 132, 90, 0.4);
-      }
-
-      /* ── SECTION COMMONS ── */
-      section {
-        padding: 100px 48px;
-      }
-
-      .section-label {
-        font-size: 10px;
-        letter-spacing: 4px;
-        text-transform: uppercase;
-        color: var(--accent);
-        margin-bottom: 12px;
-        font-weight: 500;
-      }
-
-      .section-title {
-        font-size: 48px;
-        font-weight: 300;
-        color: var(--dark-brown);
-      }
-
-      /* ── TEAM ── */
-      .team {
-        background: var(--warm-white);
-      }
-
-      .team-inner {
-        max-width: 960px;
-        margin: 0 auto;
-        text-align: center;
-      }
-
-      .team-header {
-        margin-bottom: 64px;
-      }
-
-      .team-grid {
-        display: flex;
-        gap: 50px;
-        justify-content: center;
-      }
-
-      .team-avatar {
-        width: 110px;
-        height: 110px;
-        border-radius: 50%;
-        margin: 0 auto 20px;
-        object-fit: cover;
-        background: var(--sand);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 36px;
-        color: var(--taupe);
-      }
-
-      .team-name {
-        font-size: 22px;
-        font-weight: 600;
-        color: var(--dark-brown);
-        margin-bottom: 6px;
-      }
-
-      .team-role {
-        font-size: 12px;
-        color: var(--text-light);
-        line-height: 1.6;
-      }
-
-      .btn-secondary {
-        display: inline-block;
-        margin-top: 48px;
-        border: 1.5px solid var(--accent);
-        color: var(--accent);
-        text-decoration: none;
-        padding: 12px 32px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          color 0.2s;
-      }
-      .btn-secondary:hover {
-        background: var(--accent);
-        color: var(--cream);
-      }
-
-      /* ── SCHEDULE ── */
-      .schedule {
-        background: var(--taupe);
-      }
-
-      .schedule-inner {
-        max-width: 1100px;
-        margin: 0 auto;
-      }
-      .schedule-header {
-        margin-bottom: 48px;
-      }
-
-      .schedule-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: var(--warm-white);
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 4px 40px var(--shadow);
-      }
-
-      .schedule-table thead tr {
-        background: var(--dark-brown);
-      }
-
-      .schedule-table th {
-        padding: 18px 16px;
-        font-size: 11px;
-        text-transform: uppercase;
-        color: var(--taupe);
-        font-weight: 500;
-        text-align: center;
-      }
-      .schedule-table th:last-child {
-        border-right: none;
-      }
-
-      .schedule-table td {
-        padding: 14px 12px;
-        border-right: 1px solid var(--sand);
-        border-bottom: 1px solid var(--sand);
-        text-align: center;
-        vertical-align: top;
-        font-size: 12px;
-      }
-      .schedule-table td:last-child {
-        border-right: none;
-      }
-      .schedule-table tr:last-child td {
-        border-bottom: none;
-      }
-
-      .slot {
-        background: var(--cream);
-        padding: 8px 10px;
-        margin-bottom: 6px;
-        display: inline-block;
-        width: 100%;
-      }
-
-      .slot-time {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--dark-brown);
-        display: block;
-        margin-bottom: 2px;
-      }
-
-      .slot-class {
-        font-size: 11px;
-        color: var(--accent);
-        display: block;
-        margin-bottom: 2px;
-      }
-
-      .slot-instructor {
-        font-size: 10px;
-        color: var(--text-light);
-      }
-
-      .empty-slot {
-        color: var(--sand);
-        font-size: 18px;
-        padding: 20px;
-      }
-
-      /* ── REVIEWS ── */
-      .reviews {
-        background: var(--warm-white);
-        padding: 100px 48px;
-      }
-
-      .reviews-inner {
-        max-width: 1060px;
-        margin: 0 auto;
-      }
-
-      .reviews-header {
-        text-align: center;
-        margin-bottom: 56px;
-      }
-
-      .section-label {
-        font-size: 10px;
-        letter-spacing: 4px;
-        text-transform: uppercase;
-        color: var(--accent);
-        margin-bottom: 12px;
-        font-weight: 500;
-        display: block;
-      }
-
-      .section-title {
-        font-size: clamp(28px, 4vw, 44px);
-        font-weight: 300;
-        color: var(--dark-brown);
-        line-height: 1.2;
-      }
-
-      .reviews-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        margin-bottom: 44px;
-      }
-
-      .review-card {
-        background: var(--warm-white);
-        border: 2px solid var(--dark-brown);
-        border-radius: 20px;
-        padding: 28px;
-        transition:
-          transform 0.3s,
-          box-shadow 0.3s;
-      }
-
-      .review-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 48px var(--shadow);
-      }
-
-      .review-top {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
-      }
-
-      .review-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--taupe);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--cream);
-        flex-shrink: 0;
-      }
-
-      .review-name {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--dark-brown);
-      }
-      .review-stars {
-        color: var(--accent);
-        font-size: 12px;
-        letter-spacing: 1px;
-      }
-
-      .review-text {
-        font-size: 13px;
-        line-height: 1.75;
-        color: var(--text-light);
-      }
-
-      .btn-secondary {
-        display: inline-block;
-        margin-top: 48px;
-        border: 1.5px solid var(--accent);
-        color: var(--accent);
-        text-decoration: none;
-        padding: 12px 32px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          color 0.2s;
-      }
-      .btn-secondary:hover {
-        background: var(--accent);
-        color: var(--cream);
-      }
-
-      .reviews-cta {
-        text-align: center;
-      }
-
-      /* ── EQUIPMENT BANNER ── */
-      .equipment-banner {
-        background: var(--dark-brown);
-        padding: 80px 48px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 40px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .equipment-banner::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(
-          45deg,
-          transparent,
-          transparent 30px,
-          rgba(196, 180, 154, 0.04) 30px,
-          rgba(196, 180, 154, 0.04) 31px
-        );
-      }
-
-      .equipment-text {
-        position: relative;
-        z-index: 1;
-      }
-
-      .equipment-text .section-label {
-        color: var(--taupe);
-      }
-
-      .equipment-text .section-title {
-        color: var(--cream);
-        font-size: clamp(32px, 4vw, 48px);
-        font-family: "Montserrat Alternates", sans-serif;
-        margin-bottom: 28px;
-      }
-
-      .btn-outline-light {
-        display: inline-block;
-        border: 1.5px solid var(--taupe);
-        color: var(--taupe);
-        text-decoration: none;
-        padding: 13px 32px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          color 0.2s,
-          border-color 0.2s;
-      }
-      .btn-outline-light:hover {
-        background: var(--taupe);
-        color: var(--dark-brown);
-      }
-
-      /* ── CONTACT ── */
-      .contact {
-        background: var(--cream);
-      }
-
-      .contact-inner {
-        max-width: 900px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 64px;
-        align-items: start;
-      }
-
-      .contact-header {
-        margin-bottom: 36px;
-      }
-
-      .contact-items {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .contact-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-      }
-
-      .contact-label {
-        font-size: 11px;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        color: var(--taupe);
-        margin-bottom: 3px;
-      }
-
-      .contact-value {
-        font-size: 14px;
-        color: var(--dark-brown);
-        font-weight: 400;
-        text-decoration: none;
-      }
-
-      a.contact-value:hover {
-        color: var(--accent);
-      }
-
-      .map-placeholder {
-        background: var(--sand);
-        border-radius: 20px;
-        height: 300px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(196, 180, 154, 0.4);
-        overflow: hidden;
-        position: relative;
-      }
-
-      .map-grid {
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(var(--taupe) 1px, transparent 1px),
-          linear-gradient(90deg, var(--taupe) 1px, transparent 1px);
-        background-size: 30px 30px;
-        opacity: 0.15;
-      }
-
-      .map-pin {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        color: var(--accent);
-      }
-
-      .map-pin-dot {
-        width: 20px;
-        height: 20px;
-        background: var(--accent);
-        border-radius: 50%;
-        border: 3px solid var(--cream);
-        box-shadow: 0 0 0 4px rgba(181, 132, 90, 0.2);
-      }
-
-      .map-pin-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--dark-brown);
-        background: var(--warm-white);
-        padding: 4px 10px;
-        border-radius: 20px;
-        white-space: nowrap;
-        box-shadow: 0 2px 10px var(--shadow);
-      }
-
-      /* ── FOOTER ── */
-      footer {
-        background: var(--dark-brown);
-        padding: 64px 48px 32px;
-        color: var(--taupe);
-      }
-
-      .footer-top {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 48px;
-        padding-bottom: 40px;
-        border-bottom: 1px solid rgba(196, 180, 154, 0.15);
-        margin-bottom: 24px;
-      }
-
-      .footer-col-title {
-        font-size: 10px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: rgba(196, 180, 154, 0.5);
-        margin-bottom: 18px;
-        font-weight: 500;
-      }
-
-      .footer-links {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .footer-links a {
-        text-decoration: none;
-        color: var(--taupe);
-        font-size: 13px;
-        transition: color 0.2s;
-      }
-      .footer-links a:hover {
-        color: var(--cream);
-      }
-
-      .footer-contact-line {
-        font-size: 13px;
-        margin-bottom: 6px;
-        line-height: 1.6;
-      }
-
-      .footer-social {
-        display: flex;
-        gap: 12px;
-        margin-top: 4px;
-      }
-
-      .footer-social-btn {
-        width: 34px;
-        height: 34px;
-        border: 1px solid rgba(196, 180, 154, 0.25);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: var(--taupe);
-        font-size: 14px;
-        transition:
-          border-color 0.2s,
-          color 0.2s,
-          background 0.2s;
-      }
-      .footer-social-btn:hover {
-        border-color: var(--taupe);
-        color: var(--cream);
-        background: rgba(196, 180, 154, 0.1);
-      }
-
-      .footer-bottom {
-        text-align: center;
-        font-size: 11px;
-        color: rgba(196, 180, 154, 0.4);
-        letter-spacing: 0.5px;
-      }
-
-      /* ── ANIMATIONS ── */
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes bounce {
-        0%,
-        100% {
-          transform: translateX(-50%) translateY(0);
-        }
-        50% {
-          transform: translateX(-50%) translateY(6px);
-        }
-      }
-
-      .fade-in {
-        opacity: 0;
-        transform: translateY(24px);
-        transition:
-          opacity 0.7s ease,
-          transform 0.7s ease;
-      }
-      .fade-in.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      /* ── RESPONSIVE ── */
-      @media (max-width: 900px) {
-        nav {
-          padding: 16px 24px;
-        }
-        .nav-links {
-          display: none;
-        }
-        section {
-          padding: 72px 24px;
-        }
-
-        .reviews-grid {
-          grid-template-columns: 1fr;
-        }
-        .contact-inner {
-          grid-template-columns: 1fr;
-        }
-        .equipment-banner {
-          flex-direction: column;
-        }
-
-        .footer-top {
-          grid-template-columns: 1fr 1fr;
-        }
-        .hero-title {
-          font-size: 56px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
-    <!-- NAV -->
+  <body class="home-page">
+    <div id="navbar"></div>
 
-    <nav>
-      <div class="nav-logo">
-        <div class="nav-logo-icon">PR</div>
-      </div>
-      <ul class="nav-links">
-        <li><a href="Home.html">Начало</a></li>
-        <li><a href="Team.html">Екип</a></li>
-        <li><a href="Prices.html">Цени</a></li>
-        <li><a href="Equipment.html">Пилатес оборудване</a></li>
-        <li><a href="Contacts.html">Контакти</a></li>
-      </ul>
-      <a href="http://localhost:3001/schedule" class="btn-primary">Запази час</a>
-    </nav>
-
-    <!-- HERO -->
     <section class="hero" id="home">
-      <div class="hero-bg"></div>
       <div class="hero-content">
         <p class="hero-eyebrow">Студио за пилатес · Пловдив</p>
         <h1 class="hero-title">Pilates<br /><em>Room</em></h1>
-        <p class="hero-subtitle">Твоето място за баланс и сила в Пловдив</p>
-        <a href="#contact" class="btn-primary">Запази час</a>
+        <p class="hero-subtitle">
+          "Промянвата се случва чрез движението и движението лекува" - Дж.
+          Пилатес
+        </p>
+        <a
+          href="https://reservation.studio/en/locations?keywords=3pstudio"
+          target="_blank"
+          class="btn-primary"
+          >Запази час</a
+        >
       </div>
     </section>
 
-    <!-- TEAM -->
     <section class="team" id="team">
       <div class="team-inner">
         <div class="team-header fade-in">
@@ -804,32 +40,31 @@
         </div>
         <div class="team-grid">
           <div>
-            <div class="team-avatar">П</div>
+            <img class="team-avatar" src="img/Poli.jpg" />
             <h3 class="team-name">Поли Василева</h3>
             <p class="team-role">
               Професионален инструктор<br />Кондиционен треньор
             </p>
           </div>
           <div>
-            <div class="team-avatar">Е</div>
+            <img class="team-avatar" src="img/Ema.jpg" />
             <h3 class="team-name">Ема</h3>
             <p class="team-role">Професионален инструктор</p>
           </div>
         </div>
-        <div style="text-align: center">
-          <a href="#" class="btn-secondary">Виж повече</a>
+        <div class="text-center">
+          <a href="Team.html" class="btn-secondary">Виж повече</a>
         </div>
       </div>
     </section>
 
-    <!-- SCHEDULE -->
     <section class="schedule" id="schedule">
       <div class="schedule-inner">
         <div class="schedule-header fade-in">
           <p class="section-label">Седмична програма</p>
           <h2 class="section-title">График</h2>
         </div>
-        <div class="fade-in" style="overflow-x: auto">
+        <div class="fade-in overflow-x-auto">
           <table class="schedule-table">
             <thead>
               <tr>
@@ -838,201 +73,162 @@
                 <th>Сряда</th>
                 <th>Четвъртък</th>
                 <th>Петък</th>
-                <th>Събота</th>
               </tr>
             </thead>
             <tbody>
+              <!-- Ред 1 -->
               <tr>
+                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">10:30 – 11:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
+                    <span class="slot-time">09:30 – 10:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Ема</span>
                   </span>
                 </td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">08:30 – 09:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
+                <td class="empty-slot">–</td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">09:30 – 10:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Ема</span>
+                  </span>
+                </td>
+              </tr>
+
+              <!-- Ред 2 -->
+              <tr>
+                <td class="empty-slot">–</td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">10:30 – 11:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Ема</span>
                   </span>
                 </td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
+                    <span class="slot-time">09:30 – 10:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Ема</span>
                   </span>
                 </td>
+                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">10:30 – 11:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
               </tr>
+
+              <!-- Ред 3 -->
               <tr>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">12:30 – 13:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
+                    <span class="slot-time">12:00 – 12:50</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Ема</span>
                   </span>
                 </td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">12:30 – 13:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
+                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
+                    <span class="slot-time">12:00 – 12:50</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Ема</span>
                   </span>
                 </td>
               </tr>
+
+              <!-- Ред 4 -->
               <tr>
+                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">14:30 – 15:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
+                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">14:30 – 15:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
                 <td class="empty-slot">–</td>
               </tr>
+
+              <!-- Ред 5 -->
               <tr>
+                <td class="empty-slot">–</td>
+                <td class="empty-slot">–</td>
+                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">18:30 – 19:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
                 <td class="empty-slot">–</td>
               </tr>
+
+              <!-- Ред 6 -->
               <tr>
                 <td class="empty-slot">–</td>
-                <td class="empty-slot">–</td>
                 <td>
                   <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
-                    <span class="slot-instructor">Поли</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="slot">
-                    <span class="slot-time">08:30 – 09:30</span>
-                    <span class="slot-class">Реформър пилатес</span>
+                    <span class="slot-time">19:30 – 20:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
                     <span class="slot-instructor">Поли</span>
                   </span>
                 </td>
                 <td class="empty-slot">–</td>
+                <td>
+                  <span class="slot">
+                    <span class="slot-time">19:30 – 20:20</span>
+                    <span class="slot-class">Реформър Пилатес</span>
+                    <span class="slot-instructor">Поли</span>
+                  </span>
+                </td>
                 <td class="empty-slot">–</td>
               </tr>
             </tbody>
           </table>
         </div>
+        <p class="hero-private-training">
+          Запитване за индивидуални тренировки:
+          <a href="tel:+359887307201">+359 887 307 201</a>
+        </p>
       </div>
     </section>
 
-    <!-- REVIEWS -->
     <section class="reviews">
       <div class="reviews-inner">
         <div class="reviews-header fade-in">
@@ -1042,86 +238,210 @@
         <div class="reviews-grid">
           <div class="review-card fade-in">
             <div class="review-top">
-              <div class="review-avatar">Е</div>
+              <div class="review-avatar">A</div>
               <div class="review-meta">
-                <div class="review-name">Ема</div>
+                <div class="review-name">Ангелина</div>
                 <div class="review-stars">★★★★★</div>
               </div>
             </div>
             <p class="review-text">
-              Студиото предлага спокойна атмосфера, професионални инструктори и
-              добре структурирани тренировки, които наистина помагат за
-              подобряване на стойката, гъвкавостта и тонуса.
+              Професионално отношение, персонално внимание и изключително
+              ползотворна тренировка ! Препаръчвам ! 👌💪👭🫶🏻
             </p>
           </div>
           <div class="review-card fade-in">
             <div class="review-top">
-              <div class="review-avatar">Е</div>
+              <div class="review-avatar">S</div>
               <div class="review-meta">
-                <div class="review-name">Ема</div>
+                <div class="review-name">Stanislava</div>
                 <div class="review-stars">★★★★★</div>
               </div>
             </div>
             <p class="review-text">
-              Студиото предлага спокойна атмосфера, професионални инструктори и
-              добре структурирани тренировки, които наистина помагат за
-              подобряване на стойката, гъвкавостта и тонуса.
+              Новото любимо място! Чисто и уютно, с отношение към всеки клиент!
+              Студио, в което ще практикувате истински пилатес на реформър!
             </p>
           </div>
           <div class="review-card fade-in">
             <div class="review-top">
-              <div class="review-avatar">Е</div>
+              <div class="review-avatar">В</div>
               <div class="review-meta">
-                <div class="review-name">Ема</div>
+                <div class="review-name">Виолета</div>
                 <div class="review-stars">★★★★★</div>
               </div>
             </div>
             <p class="review-text">
-              Студиото предлага спокойна атмосфера, професионални инструктори и
-              добре структурирани тренировки, които наистина помагат за
-              подобряване на стойката, гъвкавостта и тонуса.
+              Уют, професионализъм. Тренировка - удоволствие и удовлетворение!
             </p>
           </div>
         </div>
-        <div class="reviews-cta">
+        <!-- <div class="reviews-cta">
           <a href="#" class="btn-secondary">Остави коментар</a>
-        </div>
+        </div> -->
       </div>
     </section>
 
-    <!-- EQUIPMENT BANNER -->
     <div class="equipment-banner" id="equipment">
       <div class="equipment-text fade-in">
         <p class="section-label">Каталог</p>
         <h2 class="section-title">Професионално<br />пилатес оборудване</h2>
-        <a href="#" class="btn-outline-light" style="margin-top: 8px"
+        <a href="Catalog.pdf" target="_blank" class="btn-primary mt-8"
           >Разгледай каталога</a
         >
       </div>
     </div>
+    <section class="why-section" id="why">
+      <div class="reviews-header fade-in">
+        <span class="section-label">Ползи от Пилатес </span>
+        <h2 class="section-title">
+          Защо да изберете Пилатес от всички видове тренировки
+        </h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-card fade-in">
+          <div class="why-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 22 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="11"
+                cy="11"
+                r="8"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+              />
+              <path
+                d="M7.5 11l2.5 2.5 4.5-5"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h3>Гръбнак и стойка</h3>
+          <ul class="benefit-card">
+            <li>Подобрява стойката</li>
+            <li>Подобрява подвижността на гръбнака</li>
+            <li>Ефективен при болки в гърба и кръста</li>
+            <li>
+              Помага при патологии на гръбнака – кифоза, сколиоза, лордоза
+            </li>
+          </ul>
+        </div>
+        <div class="why-card fade-in">
+          <div class="why-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 22 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="3"
+                y="3"
+                width="16"
+                height="16"
+                rx="3"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+              />
+              <path
+                d="M7 11h8M11 7v8"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <h3>Мускулен тонус</h3>
+          <ul class="benefit-card">
+            <li>Стяга и издължава мускулите на цялото тяло</li>
+            <li>Подсилва целия коремен пояс</li>
+            <li>Намалява напрежението в мускулите</li>
+            <li>Подобрява мускулния баланс</li>
+          </ul>
+        </div>
+        <div class="why-card fade-in">
+          <div class="why-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 22 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11 3l2.2 6.5H20l-5.6 4.1 2.2 6.5L11 16l-5.6 4.1 2.2-6.5L2 9.5h6.8L11 3z"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h3>Тяло и движение</h3>
+          <ul class="benefit-card">
+            <li>Ефективен при болки и проблеми с врата</li>
+            <li>Подобрява общата подвижност и гъвкавост</li>
+            <li>Подобрява осъзнатото и контролирано движение</li>
+            <li>Подобрява проприоцепцията</li>
+          </ul>
+        </div>
+        <div class="why-card fade-in">
+          <div class="why-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 22 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 11a7 7 0 1 0 14 0A7 7 0 0 0 4 11z"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+              />
+              <path
+                d="M11 7v4l3 2"
+                stroke="var(--accent)"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <h3>Ум и енергия</h3>
+          <ul class="benefit-card">
+            <li>Подобрява дишането</li>
+            <li>Подобрява самочувствието и увереността в себе си</li>
+            <li>Подобрява качеството на живот</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-    <!-- CONTACT -->
     <section class="contact" id="contact">
       <div class="contact-inner">
         <div>
           <div class="contact-header fade-in">
             <p class="section-label">Локация & Контакт</p>
             <h2 class="section-title">Свържете се с нас</h2>
-            <p
-              style="
-                margin-top: 16px;
-                font-size: 14px;
-                color: var(--text-light);
-                line-height: 1.7;
-              "
-            >
+            <p class="contact-intro">
               Ще се радваме да се чуем! Свържете се с нас за записване, въпроси
               или индивидуална консултация.
             </p>
           </div>
           <div class="contact-items fade-in">
             <div class="contact-item">
-              <span>📍</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Адрес</div>
                 <span class="contact-value"
@@ -1130,7 +450,11 @@
               </div>
             </div>
             <div class="contact-item">
-              <span>📞</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M224.2 89C216.3 70.1 195.7 60.1 176.1 65.4L170.6 66.9C106 84.5 50.8 147.1 66.9 223.3C104 398.3 241.7 536 416.7 573.1C493 589.3 555.5 534 573.1 469.4L574.6 463.9C580 444.2 569.9 423.6 551.1 415.8L453.8 375.3C437.3 368.4 418.2 373.2 406.8 387.1L368.2 434.3C297.9 399.4 241.3 341 208.8 269.3L253 233.3C266.9 222 271.6 202.9 264.8 186.3L224.2 89z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Телефон</div>
                 <a href="tel:+359887307201" class="contact-value"
@@ -1139,7 +463,11 @@
               </div>
             </div>
             <div class="contact-item">
-              <span>✉️</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M112 128C85.5 128 64 149.5 64 176C64 191.1 71.1 205.3 83.2 214.4L291.2 370.4C308.3 383.2 331.7 383.2 348.8 370.4L556.8 214.4C568.9 205.3 576 191.1 576 176C576 149.5 554.5 128 528 128L112 128zM64 260L64 448C64 483.3 92.7 512 128 512L512 512C547.3 512 576 483.3 576 448L576 260L377.6 408.8C343.5 434.4 296.5 434.4 262.4 408.8L64 260z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Имейл</div>
                 <a
@@ -1150,82 +478,36 @@
               </div>
             </div>
             <div class="contact-item">
-              <span>🕐</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                  d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"
+                />
+              </svg>
               <div>
                 <div class="contact-label">Работно време</div>
                 <span class="contact-value"
-                  >Понеделник – Събота: по описания график</span
+                  >Понеделник – Петък: по описания график</span
                 >
               </div>
             </div>
           </div>
         </div>
         <div class="map-placeholder fade-in">
-          <div class="map-grid"></div>
-          <div class="map-pin">
-            <div class="map-pin-dot"></div>
-            <div class="map-pin-label">Pilates Room Пловдив</div>
-          </div>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3385.502175577877!2d24.74850022080868!3d42.15068434697287!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14acd1bd43036865%3A0x1b6bda4713e46487!2z0JrQsNC_0LDQvdCw0KDQsNC50L7QvSDQptC10L3RgtGA0LDQu9C10L0sINGD0LsuIOKAntCk0YDQtdC00LXRgNC40Log0JbQvtC70LjQviDQmtGO0YDQuOKAnCDihJYxOCwgNDAwMCDQn9C70L7QstC00LjQsg!5e1!3m2!1sbg!2sbg!4v1777885252232!5m2!1sbg!2sbg"
+            width="600"
+            height="450"
+            class="map-frame"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
         </div>
       </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer>
-      <div class="footer-top">
-        <div>
-          <div class="footer-col-title">Страници</div>
-          <ul class="footer-links">
-            <li><a href="#home">Начало</a></li>
-            <li><a href="#team">Екип</a></li>
-            <li><a href="#schedule">Цени</a></li>
-            <li><a href="#equipment">Пилатес оборудване</a></li>
-            <li><a href="#contact">Контакти</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="footer-col-title">Контакти</div>
-          <p class="footer-contact-line">
-            ул. Ж.Кюри 18, ет.3, офис 7,8, Пловдив
-          </p>
-          <p class="footer-contact-line">+359 887 307 201</p>
-          <p class="footer-contact-line">pilatesroomplovdiv@gmail.com</p>
-        </div>
-        <div>
-          <div class="footer-col-title">Свържете се с нас</div>
-          <div class="footer-social">
-            <a href="#" class="footer-social-btn" aria-label="Facebook">f</a>
-            <a href="#" class="footer-social-btn" aria-label="Instagram">◎</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        Copyright © 2026 Студио Пилатес | Powered by PilatesRoom
-      </div>
-    </footer>
+    <div id="footer"></div>
 
-    <script>
-      // Intersection Observer for fade-in animations
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add("visible");
-              // stagger children
-              e.target.querySelectorAll &&
-                e.target.querySelectorAll(".fade-in").forEach((el, i) => {
-                  el.style.transitionDelay = i * 0.1 + "s";
-                  el.classList.add("visible");
-                });
-            }
-          });
-        },
-        { threshold: 0.15 },
-      );
-
-      document
-        .querySelectorAll(".fade-in")
-        .forEach((el) => observer.observe(el));
-    </script>
+    <script src="app.js"></script>
   </body>
 </html>

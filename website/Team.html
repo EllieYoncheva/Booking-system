@@ -9,533 +9,16 @@
       href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&display=swap"
       rel="stylesheet"
     />
-    <style>
-      :root {
-        --cream: #f7f1e9;
-        --warm-white: #fdf9f4;
-        --sand: #e8ddd0;
-        --taupe: #ceb79e;
-        --brown: #7f7161;
-        --dark-brown: #3d2e24;
-        --accent: #ce6857;
-        --text: #2c1f14;
-        --text-light: #7f7161;
-        --shadow: rgba(61, 43, 31, 0.08);
-      }
 
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        font-family: "Montserrat Alternates", sans-serif;
-        background: var(--warm-white);
-        color: var(--text);
-        overflow-x: hidden;
-      }
-
-      /* ── NAV ── */
-      nav {
-        position: fixed;
-        width: 100%;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 48px;
-        background: var(--warm-white);
-        border-bottom: 1px solid var(--sand);
-      }
-
-      .nav-logo {
-        display: flex;
-        align-items: center;
-      }
-
-      .nav-logo-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--dark-brown);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--cream);
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 36px;
-        list-style: none;
-      }
-
-      .nav-links a {
-        text-decoration: none;
-        color: var(--text-light);
-        font-size: 13px;
-        font-weight: 400;
-        transition: color 0.2s;
-      }
-      .nav-links a:hover {
-        color: var(--accent);
-      }
-
-      .btn-primary {
-        display: inline-block;
-        background: var(--accent);
-        color: var(--cream);
-        text-decoration: none;
-        padding: 14px 36px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          transform 0.15s,
-          box-shadow 0.2s;
-        box-shadow: 0 4px 24px rgba(181, 132, 90, 0.35);
-      }
-      .btn-primary:hover {
-        background: var(--brown);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(181, 132, 90, 0.4);
-      }
-
-      /* ── PAGE HERO ── */
-      .page-hero {
-        padding-top: 120px;
-        padding-bottom: 64px;
-        text-align: center;
-        background: var(--warm-white);
-      }
-
-      .page-hero h1 {
-        font-size: clamp(48px, 8vw, 96px);
-        font-weight: 300;
-        color: var(--dark-brown);
-      }
-
-      /* ── INTRO TEXT ── */
-      .intro {
-        max-width: 860px;
-        margin: 0 auto;
-        padding: 0 48px 80px;
-      }
-
-      .intro p {
-        font-size: 14px;
-        line-height: 1.9;
-        color: var(--text-light);
-        margin-bottom: 14px;
-      }
-
-      .intro-cta {
-        margin-top: 28px;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--dark-brown);
-      }
-
-      /* ── INSTRUCTOR CARDS ── */
-      .instructor {
-        padding: 80px 48px;
-      }
-
-      .instructor:nth-child(even) {
-        background: var(--taupe);
-      }
-      .instructor:nth-child(odd) {
-        background: var(--warm-white);
-      }
-
-      .instructor-inner {
-        max-width: 980px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 260px 1fr;
-        gap: 64px;
-        align-items: start;
-      }
-
-      .instructor-inner.reverse {
-        grid-template-columns: 1fr 260px;
-      }
-
-      .instructor-media {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-      }
-
-      .instructor-inner.reverse .instructor-media {
-        order: 2;
-      }
-      .instructor-inner.reverse .instructor-info {
-        order: 1;
-      }
-
-      .instructor-photo {
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        background: var(--taupe);
-        object-fit: cover;
-        border: 4px solid var(--brown);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 64px;
-        transition: transform 0.4s ease;
-      }
-      .instructor-photo:hover {
-        transform: scale(1.02);
-      }
-
-      .instructor-photo-initials {
-        font-size: 56px;
-        font-weight: 300;
-        color: rgba(255, 255, 255, 0.6);
-        letter-spacing: -2px;
-        user-select: none;
-      }
-
-      .instructor-social {
-        display: flex;
-        gap: 10px;
-      }
-
-      .social-btn {
-        width: 34px;
-        height: 34px;
-        border: 1.5px solid var(--taupe);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: var(--brown);
-        border-color: var(--dark-brown);
-        font-size: 13px;
-        font-weight: 600;
-        transition:
-          background 0.2s,
-          border-color 0.2s,
-          color 0.2s;
-      }
-      .social-btn:hover {
-        background: var(--taupe);
-        color: var(--cream);
-        border-color: var(--taupe);
-      }
-
-      .instructor-info {
-        padding-top: 8px;
-      }
-
-      .instructor-name {
-        font-size: 32px;
-        font-weight: 600;
-        color: var(--dark-brown);
-        margin-bottom: 4px;
-      }
-
-      .instructor-title {
-        font-size: 13px;
-        color: var(--accent);
-        font-weight: 500;
-        margin-bottom: 24px;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 1.5px;
-      }
-
-      .instructor-bio {
-        font-size: 14px;
-        line-height: 1.5;
-        color: var(--text-light);
-      }
-
-      .instructor-bio strong {
-        color: var(--dark-brown);
-        font-weight: 600;
-      }
-
-      /* ── REVIEWS ── */
-      .reviews {
-        background: var(--taupe);
-        padding: 100px 48px;
-      }
-
-      .reviews-inner {
-        max-width: 1060px;
-        margin: 0 auto;
-      }
-
-      .reviews-header {
-        text-align: center;
-        margin-bottom: 56px;
-      }
-
-      .section-label {
-        font-size: 10px;
-        letter-spacing: 4px;
-        text-transform: uppercase;
-        color: var(--accent);
-        margin-bottom: 12px;
-        font-weight: 500;
-        display: block;
-      }
-
-      .section-title {
-        font-size: clamp(28px, 4vw, 44px);
-        font-weight: 300;
-        color: var(--dark-brown);
-        line-height: 1.2;
-      }
-
-      .reviews-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
-        margin-bottom: 44px;
-      }
-
-      .review-card {
-        background: var(--warm-white);
-        border-radius: 20px;
-        padding: 28px;
-        transition:
-          transform 0.3s,
-          box-shadow 0.3s;
-      }
-      .review-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 48px var(--shadow);
-      }
-
-      .review-top {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
-      }
-
-      .review-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--taupe);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--cream);
-        flex-shrink: 0;
-      }
-
-      .review-name {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--dark-brown);
-      }
-      .review-stars {
-        color: var(--accent);
-        font-size: 12px;
-        letter-spacing: 1px;
-      }
-
-      .review-text {
-        font-size: 13px;
-        line-height: 1.75;
-        color: var(--text-light);
-      }
-
-      .btn-secondary {
-        display: inline-block;
-        margin-top: 48px;
-        border: 1.5px solid var(--accent);
-        color: var(--accent);
-        text-decoration: none;
-        padding: 12px 32px;
-        border-radius: 40px;
-        font-size: 13px;
-        font-weight: 500;
-        transition:
-          background 0.2s,
-          color 0.2s;
-      }
-      .btn-secondary:hover {
-        background: var(--accent);
-        color: var(--cream);
-      }
-
-      .reviews-cta {
-        text-align: center;
-      }
-      /* ── FOOTER ── */
-      footer {
-        background: var(--dark-brown);
-        padding: 64px 48px 32px;
-        color: var(--taupe);
-      }
-
-      .footer-top {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 48px;
-        padding-bottom: 40px;
-        border-bottom: 1px solid rgba(206, 183, 158, 0.15);
-        margin-bottom: 24px;
-      }
-
-      .footer-col-title {
-        font-size: 10px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: rgba(206, 183, 158, 0.5);
-        margin-bottom: 18px;
-        font-weight: 500;
-      }
-
-      .footer-links {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .footer-links a {
-        text-decoration: none;
-        color: var(--taupe);
-        font-size: 13px;
-        transition: color 0.2s;
-      }
-      .footer-links a:hover {
-        color: var(--cream);
-      }
-
-      .footer-contact-line {
-        font-size: 13px;
-        margin-bottom: 6px;
-        line-height: 1.7;
-      }
-
-      .footer-social {
-        display: flex;
-        gap: 10px;
-        margin-top: 4px;
-      }
-      .footer-social-btn {
-        width: 34px;
-        height: 34px;
-        border: 1px solid rgba(206, 183, 158, 0.25);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: var(--taupe);
-        font-size: 13px;
-        font-weight: 600;
-        transition:
-          border-color 0.2s,
-          color 0.2s,
-          background 0.2s;
-      }
-      .footer-social-btn:hover {
-        border-color: var(--taupe);
-        color: var(--cream);
-        background: rgba(206, 183, 158, 0.1);
-      }
-
-      .footer-bottom {
-        text-align: center;
-        font-size: 11px;
-        color: rgba(206, 183, 158, 0.4);
-        letter-spacing: 0.5px;
-      }
-
-      /* ── FADE IN ── */
-      .fade-in {
-        opacity: 0;
-        transform: translateY(28px);
-        transition:
-          opacity 0.7s ease,
-          transform 0.7s ease;
-      }
-      .fade-in.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      /* ── RESPONSIVE ── */
-      @media (max-width: 768px) {
-        nav {
-          padding: 16px 20px;
-        }
-        .nav-links {
-          display: none;
-        }
-        .intro {
-          padding: 0 24px 60px;
-        }
-        .instructor {
-          padding: 60px 24px;
-        }
-        .instructor-inner,
-        .instructor-inner.reverse {
-          grid-template-columns: 1fr;
-        }
-        .instructor-inner.reverse .instructor-media,
-        .instructor-inner.reverse .instructor-info {
-          order: unset;
-        }
-        .instructor-photo {
-          width: 180px;
-          height: 210px;
-        }
-        .reviews {
-          padding: 72px 24px;
-        }
-        .reviews-grid {
-          grid-template-columns: 1fr;
-        }
-        .footer-top {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
-    <!-- NAV -->
-    <nav>
-      <div class="nav-logo">
-        <div class="nav-logo-icon">PR</div>
-      </div>
-      <ul class="nav-links">
-        <li><a href="Home.html">Начало</a></li>
-        <li><a href="Team.html">Екип</a></li>
-        <li><a href="#schedule">Цени</a></li>
-        <li><a href="#equipment">Пилатес оборудване</a></li>
-        <li><a href="Contacts.html">Контакти</a></li>
-      </ul>
-      <a href="http://localhost:3001/schedule" class="btn-primary">Запази час</a>
-    </nav>
+  <body class="team-page">
+    <div id="navbar"></div>
 
-    <!-- PAGE HERO -->
     <div class="page-hero fade-in">
       <h1>Екипът</h1>
     </div>
 
-    <!-- INTRO -->
     <div class="intro">
       <p class="fade-in">
         Pilates room не е просто Реформър студио, а истинско Пилатес студио,
@@ -556,23 +39,17 @@
         придобил, какви нужди и цели има.
       </p>
       <p class="fade-in">
-        Всеки, който се довери на нашия екип получава възможността да се включи
-        в Пилатес тренировка от най-високо ниво.
+        Екипът ни редовно участва в международни обучения, семинари и
+        конференции, за да осигури на всеки наш клиент тренировка от най-високо
+        ниво.
       </p>
       <p class="intro-cta fade-in">Представяме ви нашия екип!</p>
     </div>
 
-    <!-- INSTRUCTOR 1 — ПОЛИ -->
     <div class="instructor">
       <div class="instructor-inner fade-in">
         <div class="instructor-media">
-          <div class="instructor-photo">
-            <div class="instructor-photo-initials">ПВ</div>
-          </div>
-          <div class="instructor-social">
-            <a href="#" class="social-btn" aria-label="Facebook">f</a>
-            <a href="#" class="social-btn" aria-label="Instagram">◎</a>
-          </div>
+          <img class="instructor-photo" src="img/Poli.jpg" />
         </div>
         <div class="instructor-info">
           <h2 class="instructor-name">Поли Василева</h2>
@@ -581,22 +58,22 @@
           </p>
           <p class="instructor-bio">
             е <strong>сертифициран инструктор</strong> с дългогодишен опит в
-            областта на функционалните тренировки, пилатеса и индивидуалния
+            областта на функционалните тренировки, Пилатес и индивидуалния
             подход към клиента. С внимание към детайла и безкомпромисно
             отношение към техниката на изпълнение, тя създава ефективни и
             безопасни програми, съобразени с нуждите и целите на всеки. Поли
             вярва, че движението е път към по-добро здраве, самочувствие и
             баланс. <br /><br />
             Освен своята практика, Поли активно развива и обучителна дейност,
-            организирайки обучения и семинари с участието на Maksimilian Shtorn
-            в България, като по този начин допринася за изграждането на ново
-            поколение професионалисти в сферата на Пилатес.
+            организирайки обучения исеминари към Atelier Pilates Academy –
+            Италия, заедно със своя учител Maximilian Stohr (2-ро поколение
+            Пилатес преподавтел). По този начин нашето студио се включва активно
+            в създаването на ново поколение Пилатес професионалисти.
           </p>
         </div>
       </div>
     </div>
 
-    <!-- INSTRUCTOR 2 — ЕМА -->
     <div class="instructor">
       <div class="instructor-inner reverse fade-in">
         <div class="instructor-info">
@@ -614,18 +91,11 @@
           </p>
         </div>
         <div class="instructor-media">
-          <div class="instructor-photo" style="background: #c9a98a">
-            <div class="instructor-photo-initials">Е</div>
-          </div>
-          <div class="instructor-social">
-            <a href="#" class="social-btn" aria-label="Facebook">f</a>
-            <a href="#" class="social-btn" aria-label="Instagram">◎</a>
-          </div>
+          <img class="instructor-photo" src="img/Ema.jpg" />
         </div>
       </div>
     </div>
 
-    <!-- REVIEWS -->
     <section class="reviews">
       <div class="reviews-inner">
         <div class="reviews-header fade-in">
@@ -635,102 +105,48 @@
         <div class="reviews-grid">
           <div class="review-card fade-in">
             <div class="review-top">
-              <div class="review-avatar">Е</div>
+              <div class="review-avatar">A</div>
               <div class="review-meta">
-                <div class="review-name">Ема</div>
+                <div class="review-name">Ангелина</div>
                 <div class="review-stars">★★★★★</div>
               </div>
             </div>
             <p class="review-text">
-              Студиото предлага спокойна атмосфера, професионални инструктори и
-              добре структурирани тренировки, които наистина помагат за
-              подобряване на стойката, гъвкавостта и тонуса.
+              Професионално отношение, персонално внимание и изключително
+              ползотворна тренировка ! Препаръчвам ! 👌💪👭🫶🏻
             </p>
           </div>
           <div class="review-card fade-in">
             <div class="review-top">
-              <div class="review-avatar">Е</div>
+              <div class="review-avatar">S</div>
               <div class="review-meta">
-                <div class="review-name">Ема</div>
+                <div class="review-name">Stanislava</div>
                 <div class="review-stars">★★★★★</div>
               </div>
             </div>
             <p class="review-text">
-              Студиото предлага спокойна атмосфера, професионални инструктори и
-              добре структурирани тренировки, които наистина помагат за
-              подобряване на стойката, гъвкавостта и тонуса.
+              Новото любимо място! Чисто и уютно, с отношение към всеки клиент!
+              Студио, в което ще практикувате истински пилатес на реформър!
             </p>
           </div>
           <div class="review-card fade-in">
             <div class="review-top">
-              <div class="review-avatar">Е</div>
+              <div class="review-avatar">В</div>
               <div class="review-meta">
-                <div class="review-name">Ема</div>
+                <div class="review-name">Виолета</div>
                 <div class="review-stars">★★★★★</div>
               </div>
             </div>
             <p class="review-text">
-              Студиото предлага спокойна атмосфера, професионални инструктори и
-              добре структурирани тренировки, които наистина помагат за
-              подобряване на стойката, гъвкавостта и тонуса.
+              Уют, професионализъм. Тренировка - удоволствие и удовлетворение!
             </p>
           </div>
-        </div>
-        <div class="reviews-cta">
-          <a href="#" class="btn-secondary">Остави коментар</a>
         </div>
       </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer>
-      <div class="footer-top">
-        <div>
-          <div class="footer-col-title">Страници</div>
-          <ul class="footer-links">
-            <li><a href="#home">Начало</a></li>
-            <li><a href="#team">Екип</a></li>
-            <li><a href="#schedule">Цени</a></li>
-            <li><a href="#equipment">Пилатес оборудване</a></li>
-            <li><a href="#contact">Контакти</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="footer-col-title">Контакти</div>
-          <p class="footer-contact-line">
-            ул. Ж.Кюри 18, ет.3, офис 7,8, Пловдив
-          </p>
-          <p class="footer-contact-line">+359 887 307 201</p>
-          <p class="footer-contact-line">pilatesroomplovdiv@gmail.com</p>
-        </div>
-        <div>
-          <div class="footer-col-title">Свържете се с нас</div>
-          <div class="footer-social">
-            <a href="#" class="footer-social-btn" aria-label="Facebook">f</a>
-            <a href="#" class="footer-social-btn" aria-label="Instagram">◎</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        Copyright © 2026 Студио Пилатес | Powered by PilatesRoom
-      </div>
-    </footer>
+    <div id="footer"></div>
 
-    <script>
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e, i) => {
-            if (e.isIntersecting) {
-              setTimeout(() => e.target.classList.add("visible"), i * 80);
-            }
-          });
-        },
-        { threshold: 0.12 },
-      );
-
-      document
-        .querySelectorAll(".fade-in")
-        .forEach((el) => observer.observe(el));
-    </script>
+    <script src="app.js"></script>
   </body>
 </html>

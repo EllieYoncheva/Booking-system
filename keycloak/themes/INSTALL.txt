@@ -1,10 +1,11 @@
 booking-system Keycloak login theme (extends keycloak.v2 — Keycloak 26.x)
+Styled to match the Pilates Room website (warm cream / terracotta palette).
 
 Install
 -------
 1. Copy the folder "booking-system" into your Keycloak themes directory:
    <KEYCLOAK_HOME>/themes/booking-system
-   Example (your install): c:\keycloak-26.1.4\keycloak-26.1.4\themes\booking-system
+   Example: c:\keycloak-26.1.4\keycloak-26.1.4\themes\booking-system
 
 2. Restart Keycloak (or use start-dev — themes are not cached in dev mode).
 
